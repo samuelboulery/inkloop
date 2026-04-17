@@ -46,6 +46,7 @@ export interface Database {
           platform_specific_prompts?: Json
           updated_at?: string
         }
+        Relationships: []
       }
       workspace_members: {
         Row: {
@@ -65,6 +66,7 @@ export interface Database {
         Update: {
           role?: 'Owner' | 'Editor' | 'Viewer'
         }
+        Relationships: []
       }
       templates: {
         Row: {
@@ -93,6 +95,7 @@ export interface Database {
           fields?: Json
           updated_at?: string
         }
+        Relationships: []
       }
       campaigns: {
         Row: {
@@ -141,6 +144,7 @@ export interface Database {
           sent_at?: string | null
           updated_at?: string
         }
+        Relationships: []
       }
       editorial_charters: {
         Row: {
@@ -172,6 +176,7 @@ export interface Database {
           brand_guidelines?: string | null
           updated_at?: string
         }
+        Relationships: []
       }
       ai_logs: {
         Row: {
@@ -199,6 +204,7 @@ export interface Database {
           created_at?: string
         }
         Update: Record<string, never>
+        Relationships: []
       }
       publishing_events: {
         Row: {
@@ -233,6 +239,7 @@ export interface Database {
           scheduled_for?: string | null
           published_at?: string | null
         }
+        Relationships: []
       }
     }
     Views: Record<string, never>

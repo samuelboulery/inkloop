@@ -8,7 +8,7 @@ export const SocialNetworkConfigSchema = z.object({
   url: z.string().url().optional(),
 })
 
-export const SocialNetworksSchema = z.record(SocialNetworkConfigSchema)
+export const SocialNetworksSchema = z.record(z.string(), SocialNetworkConfigSchema)
 
 export const CreateWorkspaceSchema = z.object({
   name: z.string().min(1, 'Le nom est requis').max(100),
@@ -17,7 +17,7 @@ export const CreateWorkspaceSchema = z.object({
   default_llm_model: z.string().default('gpt-4o'),
   system_prompt_global: z.string().optional().nullable(),
   social_networks: SocialNetworksSchema.default({}),
-  platform_specific_prompts: z.record(z.string()).default({}),
+  platform_specific_prompts: z.record(z.string(), z.string()).default({}),
 })
 
 export const UpdateWorkspaceSchema = CreateWorkspaceSchema.partial().extend({

@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 export const VocabularyRulesSchema = z.object({
   forbidden: z.array(z.string()).default([]),
-  preferred: z.record(z.array(z.string())).default({}),
+  preferred: z.record(z.string(), z.array(z.string())).default({}),
 })
 
 export const ContentRulesSchema = z.object({
@@ -12,13 +12,13 @@ export const ContentRulesSchema = z.object({
   forbidden_topics: z.array(z.string()).default([]),
 })
 
-export const PlatformRulesSchema = z.record(ContentRulesSchema)
+export const PlatformRulesSchema = z.record(z.string(), ContentRulesSchema)
 
 export const UpsertCharterSchema = z.object({
   workspace_id: z.string().uuid(),
   tone_guidelines: z.string().optional().nullable(),
-  vocabulary_rules: VocabularyRulesSchema.default({}),
-  content_rules: ContentRulesSchema.default({}),
+  vocabulary_rules: VocabularyRulesSchema.default({ forbidden: [], preferred: {} }),
+  content_rules: ContentRulesSchema.default({ allowed_topics: [], forbidden_topics: [] }),
   brand_guidelines: z.string().optional().nullable(),
 })
 

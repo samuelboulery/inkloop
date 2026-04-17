@@ -26,18 +26,18 @@ export const CreateCampaignSchema = z.object({
   workspace_id: z.string().uuid(),
   template_id: z.string().uuid(),
   name: z.string().min(1).max(255),
-  raw_data: z.record(z.unknown()).default({}),
+  raw_data: z.record(z.string(), z.unknown()).default({}),
 })
 
 export const UpdateCampaignSchema = z.object({
   id: z.string().uuid(),
   status: CampaignStatusSchema.optional(),
-  raw_data: z.record(z.unknown()).optional(),
+  raw_data: z.record(z.string(), z.unknown()).optional(),
   ai_clarification_questions: z.array(ClarificationQASchema).optional(),
   editorial_skeleton: EditorialSkeletonSchema.optional().nullable(),
   skeleton_approved_by_user: z.boolean().optional(),
-  generated_content: z.record(GeneratedPostSchema).optional(),
-  final_edits: z.record(GeneratedPostSchema.partial()).optional(),
+  generated_content: z.record(z.string(), GeneratedPostSchema).optional(),
+  final_edits: z.record(z.string(), GeneratedPostSchema.partial()).optional(),
   sent_at: z.string().datetime().optional().nullable(),
 })
 

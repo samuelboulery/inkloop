@@ -66,12 +66,14 @@ export function CampaignResults({ campaign, onRestart }: CampaignResultsProps) {
     setError(null)
     startTransition(async () => {
       try {
+        const content = GeneratedContentSchema.parse(buildUpdatedContent())
         const updated = await updateCampaignContent({
           campaignId: localCampaign.id,
-          content: buildUpdatedContent(),
+          content,
           newStatus,
         })
         setLocalCampaign(updated)
+        setEdits({})
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Erreur lors de la sauvegarde')
       }
@@ -82,12 +84,14 @@ export function CampaignResults({ campaign, onRestart }: CampaignResultsProps) {
     setError(null)
     startTransition(async () => {
       try {
+        const content = GeneratedContentSchema.parse(buildUpdatedContent())
         const updated = await updateCampaignContent({
           campaignId: localCampaign.id,
-          content: buildUpdatedContent(),
+          content,
           newStatus: 'Ready',
         })
         setLocalCampaign(updated)
+        setEdits({})
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Erreur lors de la mise à jour')
       }

@@ -7,28 +7,38 @@ interface CharterContext {
   forbiddenTopics: string[]
   allowedTopics: string[]
   brandGuidelines: string | null
+  preferredWords: Record<string, string[]>
 }
 
-interface ClarificationsPromptInput {
+interface WorkspaceContext {
+  globalSystemPrompt?: string | null
+  platformSpecificPrompts?: Record<string, string>
+  campaignTargets?: string[]
+}
+
+interface ClarificationsPromptInput extends WorkspaceContext {
   campaignName: string
   templateName: string
   rawData: Record<string, unknown>
   charter: CharterContext
+  templateSystemPrompt?: string | null
 }
 
-interface SkeletonPromptInput {
+interface SkeletonPromptInput extends WorkspaceContext {
   campaignName: string
   rawData: Record<string, unknown>
   clarifications: ClarificationQA[]
   charter: CharterContext
   platforms: string[]
+  templateSystemPrompt?: string | null
 }
 
-interface ContentPromptInput {
+interface ContentPromptInput extends WorkspaceContext {
   campaignName: string
   skeleton: EditorialSkeleton
   platforms: string[]
   charter: CharterContext
+  templateSystemPrompt?: string | null
 }
 
 function charterBlock(charter: CharterContext): string {
@@ -41,15 +51,43 @@ function charterBlock(charter: CharterContext): string {
     lines.push(`Sujets interdits : ${charter.forbiddenTopics.join(', ')}`)
   if (charter.allowedTopics.length > 0)
     lines.push(`Sujets autorisés : ${charter.allowedTopics.join(', ')}`)
+  const preferred = Object.entries(charter.preferredWords ?? {})
+  if (preferred.length > 0)
+    lines.push(
+      `Vocabulaire préféré : ${preferred.map(([k, v]) => `"${k}" (préférer : ${v.join(', ')})`).join('; ')}`,
+    )
   if (lines.length === 0) return ''
   return `\n\nCHARTE ÉDITORIALE :\n${lines.join('\n')}`
 }
 
+function workspaceBlock(ctx: WorkspaceContext): string {
+  const lines: string[] = []
+  if (ctx.globalSystemPrompt?.trim()) lines.push(ctx.globalSystemPrompt.trim())
+  if (ctx.campaignTargets && ctx.campaignTargets.length > 0)
+    lines.push(`Cibles de campagne : ${ctx.campaignTargets.join(', ')}`)
+  if (lines.length === 0) return ''
+  return `\n\nCONTEXTE DU WORKSPACE :\n${lines.join('\n')}`
+}
+
+function platformBlock(platforms: string[], prompts: Record<string, string> = {}): string {
+  const entries = platforms
+    .filter((p) => prompts[p]?.trim())
+    .map((p) => `${p} : ${prompts[p].trim()}`)
+  if (entries.length === 0) return ''
+  return `\n\nINSTRUCTIONS PAR RÉSEAU :\n${entries.join('\n')}`
+}
+
+function templateBlock(systemPrompt?: string | null): string {
+  if (!systemPrompt?.trim()) return ''
+  return `\n\nINSTRUCTIONS SPÉCIFIQUES AU TEMPLATE :\n${systemPrompt.trim()}`
+}
+
 export function buildClarificationsPrompt(input: ClarificationsPromptInput): AIMessage[] {
-  const system = `Tu es un expert en communication et content marketing. Tu aides à clarifier les besoins pour créer une campagne de communication multi-réseaux percutante.${charterBlock(input.charter)}
+  const system = `Tu es un expert en communication et content marketing. Tu aides à clarifier les besoins pour créer une campagne de communication multi-réseaux percutante.${workspaceBlock(input)}${charterBlock(input.charter)}${templateBlock(input.templateSystemPrompt)}
 
 Réponds UNIQUEMENT en JSON valide avec ce format exact :
-{"questions": [{"question": "...", "category": "tone|structure|audience|other"}, ...]}`
+{"questions": [{"question": "...", "category": "tone"}, ...]}
+Les valeurs autorisées pour category sont uniquement : "tone", "structure", "audience", "other".`
 
   const rawSummary = Object.entries(input.rawData)
     .map(([k, v]) => `${k}: ${v}`)
@@ -69,7 +107,7 @@ Génère 3 à 5 questions de clarification pertinentes pour mieux comprendre les
 }
 
 export function buildSkeletonPrompt(input: SkeletonPromptInput): AIMessage[] {
-  const system = `Tu es un stratège en contenu. Tu crées des squelettes éditoriaux structurés pour des campagnes de communication multi-réseaux.${charterBlock(input.charter)}
+  const system = `Tu es un stratège en contenu. Tu crées des squelettes éditoriaux structurés pour des campagnes de communication multi-réseaux.${workspaceBlock(input)}${charterBlock(input.charter)}${templateBlock(input.templateSystemPrompt)}
 
 Réponds UNIQUEMENT en JSON valide avec ce format exact :
 {"angle": "...", "key_messages": ["...", "...", "..."], "content_type": "...", "tone": "..."}`
@@ -102,7 +140,7 @@ Crée un squelette éditorial avec un angle fort, des messages clés, le type de
 }
 
 export function buildContentPrompt(input: ContentPromptInput): AIMessage[] {
-  const system = `Tu es un expert en rédaction de contenu pour les réseaux sociaux. Tu crées des posts adaptés à chaque plateforme, percutants et conformes à la charte éditoriale.${charterBlock(input.charter)}
+  const system = `Tu es un expert en rédaction de contenu pour les réseaux sociaux. Tu crées des posts adaptés à chaque plateforme, percutants et conformes à la charte éditoriale.${workspaceBlock(input)}${charterBlock(input.charter)}${platformBlock(input.platforms, input.platformSpecificPrompts)}${templateBlock(input.templateSystemPrompt)}
 
 Réponds UNIQUEMENT en JSON valide avec ce format exact :
 {

@@ -24,13 +24,18 @@ import { z } from 'zod'
 interface WorkspaceAIConfig {
   platforms: string[]
   model: string | undefined
+  globalSystemPrompt: string | null
+  platformSpecificPrompts: Record<string, string>
+  campaignTargets: string[]
 }
 
 async function loadWorkspaceAIConfig(workspaceId: string): Promise<WorkspaceAIConfig> {
   const supabase = await createServerClient()
   const { data } = await supabase
     .from('workspaces')
-    .select('social_networks, default_llm_model')
+    .select(
+      'social_networks, default_llm_model, system_prompt_global, platform_specific_prompts, campaign_targets',
+    )
     .eq('id', workspaceId)
     .single()
 
@@ -44,6 +49,9 @@ async function loadWorkspaceAIConfig(workspaceId: string): Promise<WorkspaceAICo
   return {
     platforms,
     model: data?.default_llm_model ?? undefined,
+    globalSystemPrompt: data?.system_prompt_global ?? null,
+    platformSpecificPrompts: (data?.platform_specific_prompts as Record<string, string>) ?? {},
+    campaignTargets: (data?.campaign_targets as string[]) ?? [],
   }
 }
 
@@ -53,6 +61,7 @@ interface CharterContext {
   forbiddenTopics: string[]
   allowedTopics: string[]
   brandGuidelines: string | null
+  preferredWords: Record<string, string[]>
 }
 
 interface CharterRulesForValidation {
@@ -66,6 +75,7 @@ export interface GenerateClarificationsInput {
   campaignName: string
   rawData: Record<string, unknown>
   templateName: string
+  templateSystemPrompt?: string | null
 }
 
 export interface GenerateSkeletonInput {
@@ -73,6 +83,7 @@ export interface GenerateSkeletonInput {
   campaignName: string
   rawData: Record<string, unknown>
   clarifications: ClarificationQA[]
+  templateSystemPrompt?: string | null
 }
 
 export interface GenerateContentInput {
@@ -80,6 +91,7 @@ export interface GenerateContentInput {
   campaignName: string
   skeleton: EditorialSkeleton
   platforms?: string[]
+  templateSystemPrompt?: string | null
 }
 
 async function loadCharter(workspaceId: string): Promise<{
@@ -109,6 +121,7 @@ async function loadCharter(workspaceId: string): Promise<{
       forbiddenWords: vocabRules.forbidden ?? [],
       forbiddenTopics: contentRules.forbidden_topics ?? [],
       allowedTopics: contentRules.allowed_topics ?? [],
+      preferredWords: vocabRules.preferred ?? {},
     },
     rules: {
       vocabularyRules: vocabRules,
@@ -173,7 +186,8 @@ async function logAICall(params: {
 export async function generateClarificationQuestions(
   input: GenerateClarificationsInput,
 ): Promise<ClarificationQA[]> {
-  const { model } = await loadWorkspaceAIConfig(input.workspaceId)
+  const { model, globalSystemPrompt, platformSpecificPrompts, campaignTargets } =
+    await loadWorkspaceAIConfig(input.workspaceId)
   const provider = createProvider(model)
   const { charter } = await loadCharter(input.workspaceId)
 
@@ -182,6 +196,10 @@ export async function generateClarificationQuestions(
     templateName: input.templateName,
     rawData: input.rawData,
     charter,
+    templateSystemPrompt: input.templateSystemPrompt,
+    globalSystemPrompt,
+    platformSpecificPrompts,
+    campaignTargets,
   })
 
   const response = await provider.generate(messages)
@@ -208,7 +226,8 @@ export async function generateClarificationQuestions(
 export async function generateEditorialSkeleton(
   input: GenerateSkeletonInput,
 ): Promise<EditorialSkeleton> {
-  const { platforms, model } = await loadWorkspaceAIConfig(input.workspaceId)
+  const { platforms, model, globalSystemPrompt, platformSpecificPrompts, campaignTargets } =
+    await loadWorkspaceAIConfig(input.workspaceId)
   const provider = createProvider(model)
   const { charter } = await loadCharter(input.workspaceId)
 
@@ -218,6 +237,10 @@ export async function generateEditorialSkeleton(
     clarifications: input.clarifications,
     charter,
     platforms,
+    templateSystemPrompt: input.templateSystemPrompt,
+    globalSystemPrompt,
+    platformSpecificPrompts,
+    campaignTargets,
   })
 
   const response = await provider.generate(messages)
@@ -241,7 +264,13 @@ export async function generateEditorialSkeleton(
 export async function generateContent(
   input: GenerateContentInput,
 ): Promise<Record<string, GeneratedPost>> {
-  const { platforms: workspacePlatforms, model } = await loadWorkspaceAIConfig(input.workspaceId)
+  const {
+    platforms: workspacePlatforms,
+    model,
+    globalSystemPrompt,
+    platformSpecificPrompts,
+    campaignTargets,
+  } = await loadWorkspaceAIConfig(input.workspaceId)
   const platforms =
     input.platforms && input.platforms.length > 0 ? input.platforms : workspacePlatforms
 
@@ -259,11 +288,25 @@ export async function generateContent(
     skeleton: input.skeleton,
     platforms,
     charter,
+    templateSystemPrompt: input.templateSystemPrompt,
+    globalSystemPrompt,
+    platformSpecificPrompts,
+    campaignTargets,
   })
 
   const PostMapSchema = z.record(z.string(), GeneratedPostSchema)
-  const parseContent = (raw: string): Record<string, GeneratedPost> =>
-    PostMapSchema.parse(safeParseJson(raw))
+  const parseContent = (raw: string): Record<string, GeneratedPost> => {
+    const parsed = safeParseJson(raw)
+    // Le modèle omet parfois le champ `platform` — on le dérive de la clé.
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      for (const [key, val] of Object.entries(parsed as Record<string, unknown>)) {
+        if (val && typeof val === 'object' && !('platform' in val)) {
+          ;(val as Record<string, unknown>)['platform'] = key
+        }
+      }
+    }
+    return PostMapSchema.parse(parsed)
+  }
 
   const result = await regenerateUntilValid({
     provider,

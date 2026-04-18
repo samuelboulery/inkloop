@@ -16,6 +16,6 @@ export function computeNextStatus(
   action: 'save' | 'markReady',
 ): Campaign['status'] {
   if (action === 'markReady') return 'Ready'
-  if (current === 'Draft' || current === 'Ready') return 'InProgress'
+  if (current === 'Draft') return 'InProgress'
   return current
 }

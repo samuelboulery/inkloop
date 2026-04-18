@@ -175,7 +175,7 @@ export function CampaignResults({ campaign, onRestart }: CampaignResultsProps) {
               </div>
               <textarea
                 value={caption}
-                readOnly={isSent}
+                readOnly={isSent || isPending}
                 onChange={(e) => handleCaptionChange(platform, e.target.value)}
                 rows={4}
                 className="w-full rounded-lg px-3 py-2.5 text-sm resize-y"

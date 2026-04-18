@@ -4,7 +4,7 @@ vi.mock('@/lib/supabase/server', () => ({
   createServerClient: vi.fn(),
 }))
 
-import { getCampaign } from './getCampaigns'
+import { getCampaign } from './getCampaign'
 import { createServerClient } from '@/lib/supabase/server'
 
 describe('getCampaign', () => {

@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { CampaignHistory } from '@/features/campaigns/components/CampaignHistory'
 import { CampaignWizard } from '@/features/campaigns/components/CampaignWizard'
+import { CampaignViewDialog } from '@/features/campaigns/components/CampaignViewDialog'
 import { WorkspaceSettings } from './WorkspaceSettings'
 import type { Campaign, EditorialCharter, Template, Workspace } from '@/types/database'
 import { PlusIcon } from 'lucide-react'
@@ -23,13 +24,23 @@ const ACCENT = 'hsl(235, 80%, 62%)'
 
 export function WorkspaceDashboard({
   workspace,
-  campaigns,
+  campaigns: initialCampaigns,
   templates,
   charter,
 }: WorkspaceDashboardProps) {
+  const [campaigns, setCampaigns] = useState<Campaign[]>(initialCampaigns)
   const [wizardOpen, setWizardOpen] = useState(false)
+  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null)
 
-  function handleOpenCampaign(_id: string) {}
+  function handleOpenCampaign(id: string) {
+    const found = campaigns.find((c) => c.id === id) ?? null
+    setSelectedCampaign(found)
+  }
+
+  function handleCampaignUpdated(updated: Campaign) {
+    setCampaigns((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))
+    setSelectedCampaign(updated)
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -71,18 +82,14 @@ export function WorkspaceDashboard({
           <TabsTrigger
             value="campaigns"
             className="rounded-none border-b-2 border-transparent data-[state=active]:bg-transparent px-4 py-3 text-xs font-medium transition-colors"
-            style={{
-              color: TEXT_MUTED,
-            }}
+            style={{ color: TEXT_MUTED }}
           >
             Campagnes
           </TabsTrigger>
           <TabsTrigger
             value="settings"
             className="rounded-none border-b-2 border-transparent data-[state=active]:bg-transparent px-4 py-3 text-xs font-medium transition-colors"
-            style={{
-              color: TEXT_MUTED,
-            }}
+            style={{ color: TEXT_MUTED }}
           >
             Paramètres
           </TabsTrigger>
@@ -101,6 +108,13 @@ export function WorkspaceDashboard({
         workspaceId={workspace.id}
         open={wizardOpen}
         onClose={() => setWizardOpen(false)}
+      />
+
+      <CampaignViewDialog
+        campaign={selectedCampaign}
+        open={selectedCampaign !== null}
+        onOpenChange={(open) => { if (!open) setSelectedCampaign(null) }}
+        onCampaignUpdated={handleCampaignUpdated}
       />
     </div>
   )

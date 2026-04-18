@@ -1,11 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { CampaignHistory } from '@/features/campaigns/components/CampaignHistory'
-import { CampaignWizard } from '@/features/campaigns/components/CampaignWizard'
-import { CampaignViewDialog } from '@/features/campaigns/components/CampaignViewDialog'
 import { WorkspaceSettings } from './WorkspaceSettings'
 import type { Campaign, EditorialCharter, Template, Workspace } from '@/types/database'
 import { PlusIcon } from 'lucide-react'
@@ -28,18 +27,14 @@ export function WorkspaceDashboard({
   templates,
   charter,
 }: WorkspaceDashboardProps) {
-  const [campaigns, setCampaigns] = useState<Campaign[]>(initialCampaigns)
-  const [wizardOpen, setWizardOpen] = useState(false)
-  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null)
+  const router = useRouter()
 
   function handleOpenCampaign(id: string) {
-    const found = campaigns.find((c) => c.id === id) ?? null
-    setSelectedCampaign(found)
+    router.push(`/${workspace.id}/campaigns/${id}`)
   }
 
-  function handleCampaignUpdated(updated: Campaign) {
-    setCampaigns((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))
-    setSelectedCampaign(updated)
+  function handleNewCampaign() {
+    router.push(`/${workspace.id}/campaigns/new`)
   }
 
   return (
@@ -57,7 +52,7 @@ export function WorkspaceDashboard({
           </p>
         </div>
         <Button
-          onClick={() => setWizardOpen(true)}
+          onClick={handleNewCampaign}
           className="gap-2 text-xs font-medium h-8 px-3.5 rounded-md transition-all hover:scale-[1.02]"
           style={{
             background: ACCENT,
@@ -96,29 +91,13 @@ export function WorkspaceDashboard({
         </TabsList>
 
         <TabsContent value="campaigns" className="flex-1 p-7 mt-0">
-          <CampaignHistory campaigns={campaigns} onOpenCampaign={handleOpenCampaign} />
+          <CampaignHistory campaigns={initialCampaigns} onOpenCampaign={handleOpenCampaign} />
         </TabsContent>
 
         <TabsContent value="settings" className="flex-1 p-7 mt-0 overflow-auto">
           <WorkspaceSettings workspace={workspace} templates={templates} charter={charter} />
         </TabsContent>
       </Tabs>
-
-      <CampaignWizard
-        workspaceId={workspace.id}
-        open={wizardOpen}
-        onClose={() => setWizardOpen(false)}
-      />
-
-      <CampaignViewDialog
-        campaign={selectedCampaign}
-        open={selectedCampaign !== null}
-        onOpenChange={(open) => {
-          if (!open) setSelectedCampaign(null)
-        }}
-        onCampaignUpdated={handleCampaignUpdated}
-        workspaceId={workspace.id}
-      />
     </div>
   )
 }

@@ -52,7 +52,7 @@ export function CampaignWizard({ workspaceId, resumeCampaign, onComplete }: Prop
   async function handleFinalSubmitAndPublish() {
     if (!state.campaignId) return
     const ok = await submitStep6()
-    if (ok) {
+    if (ok && state.campaignId && state.campaignName) {
       setPublishedCampaign({ id: state.campaignId, name: state.campaignName })
       setPublishDialogOpen(true)
       router.refresh()

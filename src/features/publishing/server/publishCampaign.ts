@@ -9,6 +9,7 @@ import {
 import { GeneratedPostSchema, type GeneratedPost } from '@/lib/schemas/campaign'
 import type { Json } from '@/types/database'
 import { z } from 'zod'
+import { checkAndRecordWebhookRateLimit } from './webhookRateLimit'
 
 function toJson<T>(value: T): Json {
   return value as unknown as Json
@@ -77,6 +78,8 @@ export async function publishCampaign(input: PublishCampaignInput): Promise<Publ
     content: finalContent,
     scheduled_for: parsed.scheduledFor,
   })
+
+  await checkAndRecordWebhookRateLimit(supabase, campaign.workspace_id)
 
   const eventRows = platforms.map((platform) => ({
     workspace_id: campaign.workspace_id,

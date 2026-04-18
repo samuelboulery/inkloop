@@ -188,6 +188,10 @@ export interface Database {
           prompt: string
           response: string
           tokens_used: number | null
+          input_tokens: number | null
+          output_tokens: number | null
+          input_cost_usd: number | null
+          output_cost_usd: number | null
           charter_validation_passed: boolean | null
           created_at: string
         }
@@ -200,7 +204,53 @@ export interface Database {
           prompt: string
           response: string
           tokens_used?: number | null
+          input_tokens?: number | null
+          output_tokens?: number | null
+          input_cost_usd?: number | null
+          output_cost_usd?: number | null
           charter_validation_passed?: boolean | null
+          created_at?: string
+        }
+        Update: Record<string, never>
+        Relationships: []
+      }
+      ai_pricing: {
+        Row: {
+          model_id: string
+          provider: 'anthropic' | 'openai' | 'ollama'
+          input_cost_per_1m: number
+          output_cost_per_1m: number
+          effective_from: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          model_id: string
+          provider: 'anthropic' | 'openai' | 'ollama'
+          input_cost_per_1m: number
+          output_cost_per_1m: number
+          effective_from?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          provider?: 'anthropic' | 'openai' | 'ollama'
+          input_cost_per_1m?: number
+          output_cost_per_1m?: number
+          effective_from?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      webhook_rate_limits: {
+        Row: {
+          id: string
+          workspace_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          workspace_id: string
           created_at?: string
         }
         Update: Record<string, never>
@@ -248,6 +298,18 @@ export interface Database {
         Args: { wid: string; min_role?: string }
         Returns: boolean
       }
+      check_and_record_webhook_rate_limit: {
+        Args: {
+          p_workspace_id: string
+          p_window_seconds?: number
+          p_max_requests?: number
+        }
+        Returns: {
+          allowed: boolean
+          current_count: number
+          retry_after_seconds: number
+        }[]
+      }
     }
     Enums: Record<string, never>
   }
@@ -261,3 +323,4 @@ export type Campaign = Database['public']['Tables']['campaigns']['Row']
 export type EditorialCharter = Database['public']['Tables']['editorial_charters']['Row']
 export type AILog = Database['public']['Tables']['ai_logs']['Row']
 export type PublishingEvent = Database['public']['Tables']['publishing_events']['Row']
+export type WebhookRateLimit = Database['public']['Tables']['webhook_rate_limits']['Row']

@@ -9,6 +9,8 @@ export interface AIResponse {
   content: string
   model: string
   tokensUsed: number | null
+  inputTokens: number | null
+  outputTokens: number | null
 }
 
 export interface AIProvider {
@@ -35,10 +37,14 @@ export class OpenAIProvider implements AIProvider {
     })
 
     const choice = response.choices[0]
+    const inputTokens = response.usage?.prompt_tokens ?? null
+    const outputTokens = response.usage?.completion_tokens ?? null
     return {
       content: choice.message.content ?? '',
       model: this.modelId,
       tokensUsed: response.usage?.total_tokens ?? null,
+      inputTokens,
+      outputTokens,
     }
   }
 }
@@ -60,10 +66,14 @@ export class OllamaProvider implements AIProvider {
     })
 
     const choice = response.choices[0]
+    const inputTokens = response.usage?.prompt_tokens ?? null
+    const outputTokens = response.usage?.completion_tokens ?? null
     return {
       content: choice.message.content ?? '',
       model: this.modelId,
       tokensUsed: response.usage?.total_tokens ?? null,
+      inputTokens,
+      outputTokens,
     }
   }
 }
@@ -83,9 +93,15 @@ export class AnthropicProvider implements AIProvider {
     const system = messages.find((m) => m.role === 'system')?.content
     const userMessages = messages.filter((m) => m.role !== 'system')
 
+    const maxTokensRaw = process.env.ANTHROPIC_MAX_TOKENS
+    const parsedMaxTokens = maxTokensRaw ? Number.parseInt(maxTokensRaw, 10) : NaN
+    const maxTokens =
+      Number.isFinite(parsedMaxTokens) && parsedMaxTokens > 0 ? parsedMaxTokens : 4096
+    const anthropicVersion = process.env.ANTHROPIC_VERSION ?? '2023-06-01'
+
     const body = {
       model: this.modelId,
-      max_tokens: 4096,
+      max_tokens: maxTokens,
       ...(system ? { system } : {}),
       messages: userMessages,
     }
@@ -94,7 +110,7 @@ export class AnthropicProvider implements AIProvider {
       method: 'POST',
       headers: {
         'x-api-key': this.apiKey,
-        'anthropic-version': '2023-06-01',
+        'anthropic-version': anthropicVersion,
         'content-type': 'application/json',
       },
       body: JSON.stringify(body),
@@ -112,18 +128,54 @@ export class AnthropicProvider implements AIProvider {
     }
 
     const text = data.content.find((b) => b.type === 'text')?.text ?? ''
+    const inputTokens = data.usage?.input_tokens ?? null
+    const outputTokens = data.usage?.output_tokens ?? null
+    const hasUsage = inputTokens !== null || outputTokens !== null
     return {
       content: text,
       model: this.modelId,
-      tokensUsed: (data.usage?.input_tokens ?? 0) + (data.usage?.output_tokens ?? 0),
+      tokensUsed: hasUsage ? (inputTokens ?? 0) + (outputTokens ?? 0) : null,
+      inputTokens,
+      outputTokens,
     }
   }
 }
 
-export function createProvider(): AIProvider {
+export function resolveProviderFor(modelId: string): AIProvider {
+  const normalized = modelId.trim().toLowerCase()
+
+  if (normalized.startsWith('claude')) {
+    if (!process.env.ANTHROPIC_API_KEY) {
+      throw new Error(`Modèle ${modelId} demandé mais ANTHROPIC_API_KEY non configuré`)
+    }
+    return new AnthropicProvider(modelId)
+  }
+
+  if (
+    normalized.startsWith('gpt') ||
+    normalized.startsWith('o1') ||
+    normalized.startsWith('o3') ||
+    normalized.startsWith('o4')
+  ) {
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error(`Modèle ${modelId} demandé mais OPENAI_API_KEY non configuré`)
+    }
+    return new OpenAIProvider(modelId)
+  }
+
+  if (!process.env.OLLAMA_BASE_URL) {
+    throw new Error(`Modèle ${modelId} non reconnu et OLLAMA_BASE_URL non configuré`)
+  }
+  return new OllamaProvider(modelId)
+}
+
+export function createProvider(modelId?: string): AIProvider {
+  if (modelId && modelId.length > 0) return resolveProviderFor(modelId)
+
   if (process.env.ANTHROPIC_API_KEY) return new AnthropicProvider()
   if (process.env.OPENAI_API_KEY) return new OpenAIProvider()
-  const ollamaUrl = process.env.OLLAMA_BASE_URL
-  if (ollamaUrl) return new OllamaProvider()
-  throw new Error('Aucun fournisseur IA configuré. Ajoutez ANTHROPIC_API_KEY, OPENAI_API_KEY ou OLLAMA_BASE_URL.')
+  if (process.env.OLLAMA_BASE_URL) return new OllamaProvider()
+  throw new Error(
+    'Aucun fournisseur IA configuré. Ajoutez ANTHROPIC_API_KEY, OPENAI_API_KEY ou OLLAMA_BASE_URL.',
+  )
 }

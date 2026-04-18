@@ -35,6 +35,22 @@ export async function initializeCampaign(input: {
   return data.id
 }
 
+export async function saveCampaignObjectives(input: {
+  campaignId: string
+  rawData: Record<string, unknown>
+}): Promise<void> {
+  const supabase = await createServerClient()
+
+  const { error } = await supabase
+    .from('campaigns')
+    .update({
+      raw_data: toJson(input.rawData),
+    })
+    .eq('id', input.campaignId)
+
+  if (error) throw error
+}
+
 export async function saveClarificationAnswers(input: {
   campaignId: string
   qa: ClarificationQA[]

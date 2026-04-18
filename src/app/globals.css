@@ -8,7 +8,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-mono: var(--font-mono);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -72,7 +72,7 @@
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
+  --radius: 0.5rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -81,6 +81,19 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* inkloop brand */
+  --ink-bg: 222 20% 8%;
+  --ink-surface: 222 18% 11%;
+  --ink-surface-2: 222 15% 15%;
+  --ink-border: 222 15% 20%;
+  --ink-border-strong: 222 12% 26%;
+  --ink-text: 210 20% 94%;
+  --ink-text-muted: 215 12% 55%;
+  --ink-text-subtle: 215 10% 38%;
+  --ink-accent: 235 80% 62%;
+  --ink-accent-hover: 235 75% 68%;
+  --ink-accent-muted: 235 60% 20%;
 }
 
 .dark {
@@ -127,4 +140,25 @@
   html {
     @apply font-sans;
   }
+}
+
+/* inkloop utility classes */
+@layer utilities {
+  .ink-bg { background-color: hsl(var(--ink-bg)); }
+  .ink-surface { background-color: hsl(var(--ink-surface)); }
+  .ink-surface-2 { background-color: hsl(var(--ink-surface-2)); }
+  .ink-border { border-color: hsl(var(--ink-border)); }
+  .ink-border-strong { border-color: hsl(var(--ink-border-strong)); }
+  .ink-text { color: hsl(var(--ink-text)); }
+  .ink-text-muted { color: hsl(var(--ink-text-muted)); }
+  .ink-text-subtle { color: hsl(var(--ink-text-subtle)); }
+  .ink-accent { background-color: hsl(var(--ink-accent)); }
+  .ink-accent-muted { background-color: hsl(var(--ink-accent-muted)); }
+  .text-ink-accent { color: hsl(var(--ink-accent)); }
+  .text-ink-text { color: hsl(var(--ink-text)); }
+  .text-ink-muted { color: hsl(var(--ink-text-muted)); }
+  .text-ink-subtle { color: hsl(var(--ink-text-subtle)); }
+  .border-ink { border-color: hsl(var(--ink-border)); }
+  .border-ink-strong { border-color: hsl(var(--ink-border-strong)); }
+  .hover\:ink-accent:hover { background-color: hsl(var(--ink-accent-hover)); }
 }

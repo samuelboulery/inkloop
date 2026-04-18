@@ -3,6 +3,7 @@ import type { Template } from '@/types/database'
 import type { ClarificationQA, EditorialSkeleton, GeneratedPost } from '@/lib/schemas/campaign'
 import {
   initializeCampaign,
+  saveCampaignObjectives,
   saveClarificationAnswers,
   approveSkeleton,
   saveGeneratedContent,
@@ -13,7 +14,7 @@ import {
   generateContent,
 } from '@/lib/ai/index'
 
-export type WizardStep = 1 | 2 | 3 | 4 | 5
+export type WizardStep = 1 | 2 | 3 | 4 | 5 | 6
 
 export interface WizardState {
   step: WizardStep
@@ -21,6 +22,9 @@ export interface WizardState {
   selectedTemplate: Template | undefined
   campaignName: string
   rawData: Record<string, unknown>
+  objectives: string
+  audience: string
+  kpis: string
   clarificationQA: ClarificationQA[]
   skeleton: EditorialSkeleton | undefined
   skeletonApproved: boolean
@@ -36,6 +40,9 @@ const INITIAL_STATE: WizardState = {
   selectedTemplate: undefined,
   campaignName: '',
   rawData: {},
+  objectives: '',
+  audience: '',
+  kpis: '',
   clarificationQA: [],
   skeleton: undefined,
   skeletonApproved: false,
@@ -44,8 +51,6 @@ const INITIAL_STATE: WizardState = {
   isLoading: false,
   error: undefined,
 }
-
-const DEFAULT_PLATFORMS = ['LinkedIn', 'Instagram']
 
 export function useCampaignWizard(workspaceId: string) {
   const [state, setState] = useState<WizardState>(INITIAL_STATE)
@@ -81,13 +86,6 @@ export function useCampaignWizard(workspaceId: string) {
           rawData,
         })
 
-        const qa = await generateClarificationQuestions({
-          workspaceId,
-          campaignName: name,
-          rawData,
-          templateName: template.name,
-        }).catch((): ClarificationQA[] => [])
-
         setState((prev) => ({
           ...prev,
           step: 2,
@@ -95,7 +93,6 @@ export function useCampaignWizard(workspaceId: string) {
           selectedTemplate: template,
           campaignName: name,
           rawData,
-          clarificationQA: qa,
           isLoading: false,
           error: undefined,
         }))
@@ -107,6 +104,56 @@ export function useCampaignWizard(workspaceId: string) {
   )
 
   const submitStep2 = useCallback(
+    async (input: { objectives: string; audience: string; kpis: string }) => {
+      if (!state.campaignId || !state.selectedTemplate) return
+      setLoading(true)
+      try {
+        const mergedRawData: Record<string, unknown> = {
+          ...state.rawData,
+          objectives: input.objectives,
+          audience: input.audience,
+          kpis: input.kpis,
+        }
+
+        await saveCampaignObjectives({
+          campaignId: state.campaignId,
+          rawData: mergedRawData,
+        })
+
+        const qa = await generateClarificationQuestions({
+          workspaceId,
+          campaignName: state.campaignName,
+          rawData: mergedRawData,
+          templateName: state.selectedTemplate.name,
+        })
+
+        setState((prev) => ({
+          ...prev,
+          step: 3,
+          rawData: mergedRawData,
+          objectives: input.objectives,
+          audience: input.audience,
+          kpis: input.kpis,
+          clarificationQA: qa,
+          isLoading: false,
+          error: undefined,
+        }))
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Erreur lors de la sauvegarde des objectifs')
+      }
+    },
+    [
+      state.campaignId,
+      state.selectedTemplate,
+      state.campaignName,
+      state.rawData,
+      workspaceId,
+      setLoading,
+      setError,
+    ],
+  )
+
+  const submitStep3 = useCallback(
     async (qa: ClarificationQA[]) => {
       if (!state.campaignId) return
       setLoading(true)
@@ -118,18 +165,11 @@ export function useCampaignWizard(workspaceId: string) {
           campaignName: state.campaignName,
           rawData: state.rawData,
           clarifications: qa,
-        }).catch(
-          (): EditorialSkeleton => ({
-            angle: '',
-            key_messages: [],
-            content_type: '',
-            tone: '',
-          }),
-        )
+        })
 
         setState((prev) => ({
           ...prev,
-          step: 3,
+          step: 4,
           clarificationQA: qa,
           skeleton,
           isLoading: false,
@@ -142,7 +182,7 @@ export function useCampaignWizard(workspaceId: string) {
     [state.campaignId, state.campaignName, state.rawData, workspaceId, setLoading, setError],
   )
 
-  const submitStep3 = useCallback(
+  const submitStep4 = useCallback(
     async (skeleton: EditorialSkeleton) => {
       if (!state.campaignId) return
       setLoading(true)
@@ -153,12 +193,11 @@ export function useCampaignWizard(workspaceId: string) {
           workspaceId,
           campaignName: state.campaignName,
           skeleton,
-          platforms: DEFAULT_PLATFORMS,
-        }).catch((): Record<string, GeneratedPost> => ({}))
+        })
 
         setState((prev) => ({
           ...prev,
-          step: 4,
+          step: 5,
           skeleton,
           skeletonApproved: true,
           generatedContent: content,
@@ -172,11 +211,11 @@ export function useCampaignWizard(workspaceId: string) {
     [state.campaignId, state.campaignName, workspaceId, setLoading, setError],
   )
 
-  const submitStep4 = useCallback((finalEdits: Record<string, Partial<GeneratedPost>>) => {
-    setState((prev) => ({ ...prev, step: 5, finalEdits }))
+  const submitStep5 = useCallback((finalEdits: Record<string, Partial<GeneratedPost>>) => {
+    setState((prev) => ({ ...prev, step: 6, finalEdits }))
   }, [])
 
-  const submitStep5 = useCallback(async (): Promise<boolean> => {
+  const submitStep6 = useCallback(async (): Promise<boolean> => {
     if (!state.campaignId) return false
     setLoading(true)
     try {
@@ -193,5 +232,15 @@ export function useCampaignWizard(workspaceId: string) {
     }
   }, [state.campaignId, state.generatedContent, state.finalEdits, setLoading, setError])
 
-  return { state, submitStep1, submitStep2, submitStep3, submitStep4, submitStep5, goBack, reset }
+  return {
+    state,
+    submitStep1,
+    submitStep2,
+    submitStep3,
+    submitStep4,
+    submitStep5,
+    submitStep6,
+    goBack,
+    reset,
+  }
 }

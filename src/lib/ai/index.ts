@@ -8,7 +8,9 @@ import {
   buildContentPrompt,
   buildValidationPrompt,
 } from './prompt-builder'
-import { validateAllPosts } from './charter-validator'
+import { safeParseJson } from './json-parser'
+import { regenerateUntilValid } from './regenerate-until-valid'
+import { computeCost, type ModelPricing } from './cost-calculator'
 import {
   ClarificationQASchema,
   EditorialSkeletonSchema,
@@ -16,7 +18,34 @@ import {
 } from '@/lib/schemas/campaign'
 import type { ClarificationQA, EditorialSkeleton, GeneratedPost } from '@/lib/schemas/campaign'
 import type { VocabularyRules, ContentRules } from '@/lib/schemas/charter'
+import { SocialNetworksSchema } from '@/lib/schemas/workspace'
 import { z } from 'zod'
+
+interface WorkspaceAIConfig {
+  platforms: string[]
+  model: string | undefined
+}
+
+async function loadWorkspaceAIConfig(workspaceId: string): Promise<WorkspaceAIConfig> {
+  const supabase = await createServerClient()
+  const { data } = await supabase
+    .from('workspaces')
+    .select('social_networks, default_llm_model')
+    .eq('id', workspaceId)
+    .single()
+
+  const parsed = SocialNetworksSchema.safeParse(data?.social_networks ?? {})
+  const platforms = parsed.success
+    ? Object.entries(parsed.data)
+        .filter(([, config]) => config.enabled)
+        .map(([name]) => name)
+    : []
+
+  return {
+    platforms,
+    model: data?.default_llm_model ?? undefined,
+  }
+}
 
 interface CharterContext {
   toneGuidelines: string | null
@@ -50,7 +79,7 @@ export interface GenerateContentInput {
   workspaceId: string
   campaignName: string
   skeleton: EditorialSkeleton
-  platforms: string[]
+  platforms?: string[]
 }
 
 async function loadCharter(workspaceId: string): Promise<{
@@ -89,6 +118,22 @@ async function loadCharter(workspaceId: string): Promise<{
   }
 }
 
+async function loadModelPricing(modelId: string): Promise<ModelPricing | null> {
+  const supabase = await createServerClient()
+  const { data } = await supabase
+    .from('ai_pricing')
+    .select('input_cost_per_1m, output_cost_per_1m')
+    .eq('model_id', modelId)
+    .maybeSingle()
+
+  if (!data) return null
+
+  return {
+    inputCostPer1M: Number(data.input_cost_per_1m),
+    outputCostPer1M: Number(data.output_cost_per_1m),
+  }
+}
+
 async function logAICall(params: {
   workspaceId: string
   campaignId?: string
@@ -97,9 +142,18 @@ async function logAICall(params: {
   prompt: string
   response: string
   tokensUsed: number | null
+  inputTokens: number | null
+  outputTokens: number | null
   charterValidationPassed: boolean | null
 }): Promise<void> {
   const supabase = await createServerClient()
+  const pricing = await loadModelPricing(params.model)
+  const { inputCostUsd, outputCostUsd } = computeCost({
+    inputTokens: params.inputTokens,
+    outputTokens: params.outputTokens,
+    pricing,
+  })
+
   await supabase.from('ai_logs').insert({
     workspace_id: params.workspaceId,
     campaign_id: params.campaignId ?? null,
@@ -108,20 +162,19 @@ async function logAICall(params: {
     prompt: params.prompt,
     response: params.response,
     tokens_used: params.tokensUsed,
+    input_tokens: params.inputTokens,
+    output_tokens: params.outputTokens,
+    input_cost_usd: inputCostUsd,
+    output_cost_usd: outputCostUsd,
     charter_validation_passed: params.charterValidationPassed,
   })
-}
-
-function safeParseJson(raw: string): unknown {
-  const jsonMatch = raw.match(/\{[\s\S]*\}|\[[\s\S]*\]/)
-  if (!jsonMatch) throw new Error('Aucun JSON trouvé dans la réponse IA')
-  return JSON.parse(jsonMatch[0])
 }
 
 export async function generateClarificationQuestions(
   input: GenerateClarificationsInput,
 ): Promise<ClarificationQA[]> {
-  const provider = createProvider()
+  const { model } = await loadWorkspaceAIConfig(input.workspaceId)
+  const provider = createProvider(model)
   const { charter } = await loadCharter(input.workspaceId)
 
   const messages = buildClarificationsPrompt({
@@ -141,6 +194,8 @@ export async function generateClarificationQuestions(
     prompt: messages[messages.length - 1].content,
     response: response.content,
     tokensUsed: response.tokensUsed,
+    inputTokens: response.inputTokens,
+    outputTokens: response.outputTokens,
     charterValidationPassed: null,
   })
 
@@ -153,19 +208,8 @@ export async function generateClarificationQuestions(
 export async function generateEditorialSkeleton(
   input: GenerateSkeletonInput,
 ): Promise<EditorialSkeleton> {
-  const provider = createProvider()
-  const supabase = await createServerClient()
-
-  const { data: workspace } = await supabase
-    .from('workspaces')
-    .select('social_networks')
-    .eq('id', input.workspaceId)
-    .single()
-
-  const platforms: string[] = Array.isArray(workspace?.social_networks)
-    ? (workspace.social_networks as string[])
-    : []
-
+  const { platforms, model } = await loadWorkspaceAIConfig(input.workspaceId)
+  const provider = createProvider(model)
   const { charter } = await loadCharter(input.workspaceId)
 
   const messages = buildSkeletonPrompt({
@@ -186,6 +230,8 @@ export async function generateEditorialSkeleton(
     prompt: messages[messages.length - 1].content,
     response: response.content,
     tokensUsed: response.tokensUsed,
+    inputTokens: response.inputTokens,
+    outputTokens: response.outputTokens,
     charterValidationPassed: null,
   })
 
@@ -195,68 +241,61 @@ export async function generateEditorialSkeleton(
 export async function generateContent(
   input: GenerateContentInput,
 ): Promise<Record<string, GeneratedPost>> {
-  const provider = createProvider()
+  const { platforms: workspacePlatforms, model } = await loadWorkspaceAIConfig(input.workspaceId)
+  const platforms =
+    input.platforms && input.platforms.length > 0 ? input.platforms : workspacePlatforms
+
+  if (platforms.length === 0) {
+    throw new Error(
+      'Aucune plateforme configurée pour ce workspace. Activez au moins un réseau social dans les paramètres.',
+    )
+  }
+
+  const provider = createProvider(model)
   const { charter, rules } = await loadCharter(input.workspaceId)
 
   const messages = buildContentPrompt({
     campaignName: input.campaignName,
     skeleton: input.skeleton,
-    platforms: input.platforms,
+    platforms,
     charter,
   })
 
-  let response = await provider.generate(messages)
-  let parsed = safeParseJson(response.content) as Record<string, unknown>
-
   const PostMapSchema = z.record(z.string(), GeneratedPostSchema)
-  let content = PostMapSchema.parse(parsed)
+  const parseContent = (raw: string): Record<string, GeneratedPost> =>
+    PostMapSchema.parse(safeParseJson(raw))
 
-  const validation = validateAllPosts(content, rules)
-
-  await logAICall({
-    workspaceId: input.workspaceId,
-    model: response.model,
-    step: 'generation',
-    prompt: messages[messages.length - 1].content,
-    response: response.content,
-    tokensUsed: response.tokensUsed,
-    charterValidationPassed: validation.passed,
+  const result = await regenerateUntilValid({
+    provider,
+    initialMessages: messages,
+    rebuildMessages: ({ previousResponse, violationSummary }) =>
+      buildValidationPrompt(previousResponse, charter, violationSummary),
+    rules,
+    parseContent,
   })
 
-  if (!validation.passed) {
-    const violationSummary = Object.entries(validation.violations)
+  await Promise.all(
+    result.attempts.map((attempt) =>
+      logAICall({
+        workspaceId: input.workspaceId,
+        model: attempt.model,
+        step: attempt.attemptNumber === 1 ? 'generation' : 'validation',
+        prompt: attempt.messages[attempt.messages.length - 1].content,
+        response: attempt.rawResponse,
+        tokensUsed: attempt.tokensUsed,
+        inputTokens: attempt.inputTokens,
+        outputTokens: attempt.outputTokens,
+        charterValidationPassed: attempt.validation.passed,
+      }),
+    ),
+  )
+
+  if (!result.final.validation.passed) {
+    const remaining = Object.entries(result.final.validation.violations)
       .map(([p, v]) => `${p}: ${v.join('; ')}`)
       .join('\n')
-
-    const regenMessages = buildValidationPrompt(
-      response.content,
-      charter,
-      violationSummary,
-    )
-
-    response = await provider.generate(regenMessages)
-    parsed = safeParseJson(response.content) as Record<string, unknown>
-    content = PostMapSchema.parse(parsed)
-
-    const revalidation = validateAllPosts(content, rules)
-
-    await logAICall({
-      workspaceId: input.workspaceId,
-      model: response.model,
-      step: 'validation',
-      prompt: regenMessages[regenMessages.length - 1].content,
-      response: response.content,
-      tokensUsed: response.tokensUsed,
-      charterValidationPassed: revalidation.passed,
-    })
-
-    if (!revalidation.passed) {
-      const remaining = Object.entries(revalidation.violations)
-        .map(([p, v]) => `${p}: ${v.join('; ')}`)
-        .join('\n')
-      throw new Error(`Contenu non conforme à la charte après régénération :\n${remaining}`)
-    }
+    throw new Error(`Contenu non conforme à la charte après régénération :\n${remaining}`)
   }
 
-  return content
+  return result.final.content
 }

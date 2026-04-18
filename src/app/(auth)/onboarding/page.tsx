@@ -13,6 +13,16 @@ const LLM_OPTIONS = [
   { value: 'ollama/llama3', label: 'Llama 3 (Ollama local)' },
 ]
 
+const BG = 'hsl(222, 22%, 7%)'
+const SURFACE = 'hsl(222, 18%, 11%)'
+const BORDER = 'hsl(222, 15%, 18%)'
+const BORDER_INPUT = 'hsl(222, 15%, 20%)'
+const TEXT = 'hsl(210, 20%, 94%)'
+const TEXT_LABEL = 'hsl(210, 15%, 70%)'
+const TEXT_MUTED = 'hsl(215, 12%, 45%)'
+const INPUT_BG = 'hsl(222, 20%, 8%)'
+const ACCENT = 'hsl(235, 80%, 62%)'
+
 export default function OnboardingPage() {
   const router = useRouter()
   const [step, setStep] = useState<'check' | 'create'>('check')
@@ -44,7 +54,6 @@ export default function OnboardingPage() {
 
       if (wsError) throw wsError
 
-      // Ajoute l'owner comme membre Owner
       await supabase.from('workspace_members').insert({
         workspace_id: workspace.id,
         user_id: user.id,
@@ -59,46 +68,90 @@ export default function OnboardingPage() {
     }
   }
 
-  // Vérifie si l'utilisateur a déjà des workspaces
   if (step === 'check') {
     return <WorkspaceChecker onNoWorkspace={() => setStep('create')} onWorkspaceFound={(id) => router.push(`/${id}`)} />
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-950">
-      <div className="max-w-lg w-full mx-4">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-white mb-2">Bienvenue sur inkloop</h1>
-          <p className="text-gray-400">Créez votre premier espace de travail pour commencer.</p>
+    <div
+      className="min-h-screen flex items-center justify-center relative overflow-hidden"
+      style={{ background: BG }}
+    >
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: `radial-gradient(ellipse 60% 50% at 50% 0%, hsl(235, 80%, 20%, 0.2) 0%, transparent 70%)`,
+        }}
+      />
+
+      <div className="max-w-sm w-full mx-6 relative">
+        <div className="flex flex-col items-center mb-8">
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
+            style={{ background: ACCENT, boxShadow: '0 4px 24px hsl(235, 80%, 62%, 0.3)' }}
+          >
+            <span className="text-white font-bold text-xs tracking-tight">ink</span>
+          </div>
+          <h1 className="text-xl font-semibold tracking-tight" style={{ color: TEXT }}>
+            Bienvenue sur inkloop
+          </h1>
+          <p className="text-sm mt-1" style={{ color: TEXT_MUTED }}>
+            Créez votre premier espace de travail pour commencer.
+          </p>
         </div>
 
-        <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800">
+        <div
+          className="rounded-xl p-7"
+          style={{ background: SURFACE, border: `1px solid ${BORDER}` }}
+        >
           <form onSubmit={handleCreate} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Nom du workspace</label>
+              <label className="block text-xs font-medium mb-1.5" style={{ color: TEXT_LABEL }}>
+                Nom du workspace
+              </label>
               <input
                 type="text"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 placeholder="Mon association / Mon profil"
                 required
-                className="w-full px-3.5 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                className="w-full px-3.5 py-2.5 rounded-lg text-sm outline-none transition-all placeholder:text-[hsl(215,10%,32%)]"
+                style={{ background: INPUT_BG, border: `1px solid ${BORDER_INPUT}`, color: TEXT }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = 'hsl(235, 60%, 45%)'
+                  e.currentTarget.style.boxShadow = '0 0 0 3px hsl(235, 80%, 62%, 0.12)'
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = BORDER_INPUT
+                  e.currentTarget.style.boxShadow = 'none'
+                }}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Type</label>
-              <div className="grid grid-cols-2 gap-3">
+              <label className="block text-xs font-medium mb-1.5" style={{ color: TEXT_LABEL }}>
+                Type
+              </label>
+              <div className="grid grid-cols-2 gap-2.5">
                 {(['Personal', 'Association'] as const).map((t) => (
                   <button
                     key={t}
                     type="button"
                     onClick={() => setForm({ ...form, type: t })}
-                    className={`py-3 px-4 rounded-lg border text-sm font-medium transition-colors ${
+                    className="py-2.5 px-4 rounded-lg text-sm font-medium transition-all"
+                    style={
                       form.type === t
-                        ? 'bg-indigo-600 border-indigo-500 text-white'
-                        : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-600'
-                    }`}
+                        ? {
+                            background: 'hsl(235, 60%, 20%)',
+                            border: '1px solid hsl(235, 60%, 35%)',
+                            color: 'hsl(235, 90%, 78%)',
+                          }
+                        : {
+                            background: INPUT_BG,
+                            border: `1px solid ${BORDER_INPUT}`,
+                            color: 'hsl(215, 12%, 55%)',
+                          }
+                    }
                   >
                     {t === 'Personal' ? 'Profil personnel' : 'Association'}
                   </button>
@@ -107,26 +160,49 @@ export default function OnboardingPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Modèle IA par défaut</label>
+              <label className="block text-xs font-medium mb-1.5" style={{ color: TEXT_LABEL }}>
+                Modèle IA par défaut
+              </label>
               <select
                 value={form.default_llm_model}
                 onChange={(e) => setForm({ ...form, default_llm_model: e.target.value })}
-                className="w-full px-3.5 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                className="w-full px-3.5 py-2.5 rounded-lg text-sm outline-none transition-all appearance-none"
+                style={{
+                  background: INPUT_BG,
+                  border: `1px solid ${BORDER_INPUT}`,
+                  color: TEXT,
+                }}
               >
                 {LLM_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  <option key={opt.value} value={opt.value} style={{ background: 'hsl(222, 20%, 10%)' }}>
+                    {opt.label}
+                  </option>
                 ))}
               </select>
             </div>
 
             {error && (
-              <p className="text-sm text-red-400 bg-red-400/10 rounded-lg px-3 py-2">{error}</p>
+              <p
+                className="text-xs rounded-lg px-3.5 py-2.5"
+                style={{
+                  color: 'hsl(0, 70%, 65%)',
+                  background: 'hsl(0, 70%, 20%, 0.2)',
+                  border: '1px solid hsl(0, 60%, 30%, 0.3)',
+                }}
+              >
+                {error}
+              </p>
             )}
 
             <button
               type="submit"
               disabled={loading || !form.name}
-              className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors text-sm"
+              className="w-full py-2.5 px-4 rounded-lg text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 active:scale-[0.99]"
+              style={{
+                background: ACCENT,
+                color: '#fff',
+                boxShadow: form.name ? '0 2px 12px hsl(235, 80%, 62%, 0.35)' : 'none',
+              }}
             >
               {loading ? 'Création…' : 'Créer mon workspace'}
             </button>
@@ -159,8 +235,8 @@ function WorkspaceChecker({
     })
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-950">
-      <div className="text-gray-500 text-sm">Chargement…</div>
+    <div className="min-h-screen flex items-center justify-center" style={{ background: 'hsl(222, 22%, 7%)' }}>
+      <div className="text-sm" style={{ color: 'hsl(215, 12%, 35%)' }}>Chargement…</div>
     </div>
   )
 }

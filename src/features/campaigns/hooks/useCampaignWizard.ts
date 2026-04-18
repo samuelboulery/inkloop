@@ -34,6 +34,7 @@ export interface WizardState {
   finalEdits: Record<string, Partial<GeneratedPost>>
   isLoading: boolean
   error: string | undefined
+  isComplete: boolean
 }
 
 const INITIAL_STATE: WizardState = {
@@ -52,6 +53,7 @@ const INITIAL_STATE: WizardState = {
   finalEdits: {},
   isLoading: false,
   error: undefined,
+  isComplete: false,
 }
 
 export function campaignToInitialWizardState(campaign: Campaign): Partial<WizardState> {
@@ -264,13 +266,22 @@ export function useCampaignWizard(workspaceId: string, initialState?: Partial<Wi
         content: state.generatedContent,
         finalEdits: state.finalEdits,
       })
-      setState((prev) => ({ ...prev, isLoading: false, error: undefined }))
+      setState((prev) => ({ ...prev, isLoading: false, error: undefined, isComplete: true }))
       return true
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de la finalisation')
       return false
     }
   }, [state.campaignId, state.generatedContent, state.finalEdits, setLoading, setError])
+
+  const restartFromStep = useCallback((step: WizardStep) => {
+    setState((prev) => ({
+      ...prev,
+      step,
+      isComplete: false,
+      error: undefined,
+    }))
+  }, [])
 
   return {
     state,
@@ -282,5 +293,6 @@ export function useCampaignWizard(workspaceId: string, initialState?: Partial<Wi
     submitStep6,
     goBack,
     reset,
+    restartFromStep,
   }
 }

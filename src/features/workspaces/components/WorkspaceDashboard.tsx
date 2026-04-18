@@ -113,8 +113,11 @@ export function WorkspaceDashboard({
       <CampaignViewDialog
         campaign={selectedCampaign}
         open={selectedCampaign !== null}
-        onOpenChange={(open) => { if (!open) setSelectedCampaign(null) }}
+        onOpenChange={(open) => {
+          if (!open) setSelectedCampaign(null)
+        }}
         onCampaignUpdated={handleCampaignUpdated}
+        workspaceId={workspace.id}
       />
     </div>
   )

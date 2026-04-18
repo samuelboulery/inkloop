@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { PublishingDialog } from '@/features/publishing/components/PublishingDialog'
+import { CampaignWizard } from './CampaignWizard'
 import { updateCampaignContent } from '../server/wizardActions'
 import { computeNextStatus, getCharLimit } from '../utils/campaignContent'
 import { GeneratedPostSchema } from '@/lib/schemas/campaign'
@@ -32,6 +33,7 @@ interface CampaignViewDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onCampaignUpdated: (updated: Campaign) => void
+  workspaceId: string
 }
 
 export function CampaignViewDialog({
@@ -39,8 +41,10 @@ export function CampaignViewDialog({
   open,
   onOpenChange,
   onCampaignUpdated,
+  workspaceId,
 }: CampaignViewDialogProps) {
   const [publishOpen, setPublishOpen] = useState(false)
+  const [wizardOpen, setWizardOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [edits, setEdits] = useState<Record<string, string>>({})
@@ -137,9 +141,25 @@ export function CampaignViewDialog({
 
           <div className="flex-1 overflow-y-auto space-y-6 pr-1">
             {platforms.length === 0 && (
-              <p className="text-sm text-center py-10" style={{ color: 'hsl(215, 12%, 40%)' }}>
-                Aucun contenu généré pour cette campagne.
-              </p>
+              <div className="flex flex-col items-center gap-4 py-10">
+                <p className="text-sm text-center" style={{ color: 'hsl(215, 12%, 40%)' }}>
+                  Aucun contenu généré pour cette campagne.
+                </p>
+                {!isSent && (
+                  <Button
+                    size="sm"
+                    onClick={() => setWizardOpen(true)}
+                    className="text-xs h-8"
+                    style={{
+                      background: 'hsl(235, 60%, 20%)',
+                      color: 'hsl(235, 90%, 78%)',
+                      border: '1px solid hsl(235, 60%, 28%)',
+                    }}
+                  >
+                    Reprendre la campagne
+                  </Button>
+                )}
+              </div>
             )}
 
             {platforms.map(([platform, post]) => {
@@ -252,6 +272,16 @@ export function CampaignViewDialog({
           onOpenChange={setPublishOpen}
         />
       )}
+
+      <CampaignWizard
+        workspaceId={workspaceId}
+        open={wizardOpen}
+        onClose={() => {
+          setWizardOpen(false)
+          onOpenChange(false)
+        }}
+        resumeCampaign={campaign}
+      />
     </>
   )
 }

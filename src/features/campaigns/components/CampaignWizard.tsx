@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Campaign } from '@/types/database'
 import { useCampaignWizard, campaignToInitialWizardState } from '../hooks/useCampaignWizard'
+import type { WizardState } from '../hooks/useCampaignWizard'
 import { StepTemplateSelect } from './steps/StepTemplateSelect'
 import { StepObjectives } from './steps/StepObjectives'
 import { StepClarification } from './steps/StepClarification'
@@ -19,12 +20,21 @@ type StepNum = 1 | 2 | 3 | 4 | 5 | 6
 interface Props {
   workspaceId: string
   resumeCampaign?: Campaign
+  wizardInitialState?: Partial<WizardState>
   onComplete?: (campaignId: string) => void
 }
 
-export function CampaignWizard({ workspaceId, resumeCampaign, onComplete }: Props) {
+export function CampaignWizard({
+  workspaceId,
+  resumeCampaign,
+  wizardInitialState,
+  onComplete,
+}: Props) {
   const router = useRouter()
-  const initialState = resumeCampaign ? campaignToInitialWizardState(resumeCampaign) : undefined
+  const derivedInitialState = resumeCampaign
+    ? campaignToInitialWizardState(resumeCampaign)
+    : undefined
+  const initialState = wizardInitialState ?? derivedInitialState
   const {
     state,
     submitStep1,

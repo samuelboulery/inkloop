@@ -2,7 +2,7 @@
 
 import { createServerClient } from '@/lib/supabase/server'
 import type { ClarificationQA, EditorialSkeleton, GeneratedPost } from '@/lib/schemas/campaign'
-import type { Json } from '@/types/database'
+import type { Campaign, Json } from '@/types/database'
 
 function toJson<T>(value: T): Json {
   return value as unknown as Json
@@ -15,7 +15,9 @@ export async function initializeCampaign(input: {
   rawData: Record<string, unknown>
 }): Promise<string> {
   const supabase = await createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) throw new Error('Non authentifié')
 
   const { data, error } = await supabase
@@ -102,4 +104,30 @@ export async function saveGeneratedContent(input: {
     .eq('id', input.campaignId)
 
   if (error) throw error
+}
+
+export async function updateCampaignContent(input: {
+  campaignId: string
+  content: Record<string, GeneratedPost>
+  newStatus: Campaign['status']
+}): Promise<Campaign> {
+  if (input.newStatus === 'Sent') {
+    throw new Error('Impossible de modifier une campagne déjà envoyée')
+  }
+
+  const supabase = await createServerClient()
+
+  const { data, error } = await supabase
+    .from('campaigns')
+    .update({
+      generated_content: toJson(input.content),
+      status: input.newStatus,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', input.campaignId)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
 }

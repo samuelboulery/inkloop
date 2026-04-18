@@ -2,13 +2,9 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { useCampaignWizard } from '../hooks/useCampaignWizard'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import type { Campaign } from '@/types/database'
+import { useCampaignWizard, campaignToInitialWizardState } from '../hooks/useCampaignWizard'
 import { StepTemplateSelect } from './steps/StepTemplateSelect'
 import { StepObjectives } from './steps/StepObjectives'
 import { StepClarification } from './steps/StepClarification'
@@ -17,14 +13,7 @@ import { StepGeneration } from './steps/StepGeneration'
 import { StepReview } from './steps/StepReview'
 import { PublishingDialog } from '@/features/publishing/components/PublishingDialog'
 
-const STEP_LABELS = [
-  'Template',
-  'Objectifs',
-  'Clarification',
-  'Squelette',
-  'Contenu',
-  'Révision',
-]
+const STEP_LABELS = ['Template', 'Objectifs', 'Clarification', 'Squelette', 'Contenu', 'Révision']
 
 type StepNum = 1 | 2 | 3 | 4 | 5 | 6
 
@@ -32,10 +21,12 @@ interface Props {
   workspaceId: string
   open: boolean
   onClose: () => void
+  resumeCampaign?: Campaign
 }
 
-export function CampaignWizard({ workspaceId, open, onClose }: Props) {
+export function CampaignWizard({ workspaceId, open, onClose, resumeCampaign }: Props) {
   const router = useRouter()
+  const initialState = resumeCampaign ? campaignToInitialWizardState(resumeCampaign) : undefined
   const {
     state,
     submitStep1,
@@ -46,7 +37,7 @@ export function CampaignWizard({ workspaceId, open, onClose }: Props) {
     submitStep6,
     goBack,
     reset,
-  } = useCampaignWizard(workspaceId)
+  } = useCampaignWizard(workspaceId, initialState)
 
   const [publishDialogOpen, setPublishDialogOpen] = useState(false)
   const [publishedCampaign, setPublishedCampaign] = useState<
@@ -94,8 +85,11 @@ export function CampaignWizard({ workspaceId, open, onClose }: Props) {
         }}
       >
         <DialogHeader>
-          <DialogTitle className="text-[15px] font-semibold" style={{ color: 'hsl(210, 20%, 94%)' }}>
-            Nouvelle campagne
+          <DialogTitle
+            className="text-[15px] font-semibold"
+            style={{ color: 'hsl(210, 20%, 94%)' }}
+          >
+            {resumeCampaign ? 'Reprendre la campagne' : 'Nouvelle campagne'}
           </DialogTitle>
         </DialogHeader>
 
@@ -114,17 +108,17 @@ export function CampaignWizard({ workspaceId, open, onClose }: Props) {
                       isDone
                         ? { background: 'hsl(235, 80%, 62%)', color: '#fff' }
                         : isActive
-                        ? {
-                            background: 'hsl(235, 60%, 20%)',
-                            color: 'hsl(235, 90%, 78%)',
-                            boxShadow: '0 0 0 3px hsl(235, 80%, 62%, 0.2)',
-                            border: '1px solid hsl(235, 60%, 38%)',
-                          }
-                        : {
-                            background: 'hsl(222, 18%, 16%)',
-                            color: 'hsl(215, 12%, 38%)',
-                            border: '1px solid hsl(222, 15%, 22%)',
-                          }
+                          ? {
+                              background: 'hsl(235, 60%, 20%)',
+                              color: 'hsl(235, 90%, 78%)',
+                              boxShadow: '0 0 0 3px hsl(235, 80%, 62%, 0.2)',
+                              border: '1px solid hsl(235, 60%, 38%)',
+                            }
+                          : {
+                              background: 'hsl(222, 18%, 16%)',
+                              color: 'hsl(215, 12%, 38%)',
+                              border: '1px solid hsl(222, 15%, 22%)',
+                            }
                     }
                   >
                     {isDone ? '✓' : stepNum}
@@ -135,8 +129,8 @@ export function CampaignWizard({ workspaceId, open, onClose }: Props) {
                       color: isActive
                         ? 'hsl(235, 80%, 75%)'
                         : isDone
-                        ? 'hsl(215, 12%, 50%)'
-                        : 'hsl(215, 10%, 32%)',
+                          ? 'hsl(215, 12%, 50%)'
+                          : 'hsl(215, 10%, 32%)',
                     }}
                   >
                     {label}
@@ -146,9 +140,8 @@ export function CampaignWizard({ workspaceId, open, onClose }: Props) {
                   <div
                     className="h-px flex-1 mx-1 transition-colors"
                     style={{
-                      background: state.step > stepNum
-                        ? 'hsl(235, 80%, 45%)'
-                        : 'hsl(222, 15%, 20%)',
+                      background:
+                        state.step > stepNum ? 'hsl(235, 80%, 45%)' : 'hsl(222, 15%, 20%)',
                     }}
                   />
                 )}
@@ -166,7 +159,9 @@ export function CampaignWizard({ workspaceId, open, onClose }: Props) {
               border: '1px solid hsl(0, 60%, 30%, 0.3)',
             }}
           >
-            <p className="text-xs" style={{ color: 'hsl(0, 70%, 65%)' }}>{state.error}</p>
+            <p className="text-xs" style={{ color: 'hsl(0, 70%, 65%)' }}>
+              {state.error}
+            </p>
           </div>
         )}
 

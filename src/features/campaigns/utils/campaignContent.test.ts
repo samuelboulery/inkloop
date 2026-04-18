@@ -33,4 +33,7 @@ describe('computeNextStatus', () => {
   it('InProgress + markReady → Ready', () => {
     expect(computeNextStatus('InProgress', 'markReady')).toBe('Ready')
   })
+  it('Sent + save → Sent (cas impossible, lecture seule)', () => {
+    expect(computeNextStatus('Sent', 'save')).toBe('Sent')
+  })
 })

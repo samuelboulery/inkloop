@@ -1,6 +1,8 @@
 import { useState, useCallback } from 'react'
-import type { Template } from '@/types/database'
+import { z } from 'zod'
+import type { Campaign, Template } from '@/types/database'
 import type { ClarificationQA, EditorialSkeleton, GeneratedPost } from '@/lib/schemas/campaign'
+import { ClarificationQASchema, EditorialSkeletonSchema } from '@/lib/schemas/campaign'
 import {
   initializeCampaign,
   saveCampaignObjectives,
@@ -32,6 +34,7 @@ export interface WizardState {
   finalEdits: Record<string, Partial<GeneratedPost>>
   isLoading: boolean
   error: string | undefined
+  isComplete: boolean
 }
 
 const INITIAL_STATE: WizardState = {
@@ -50,10 +53,49 @@ const INITIAL_STATE: WizardState = {
   finalEdits: {},
   isLoading: false,
   error: undefined,
+  isComplete: false,
 }
 
-export function useCampaignWizard(workspaceId: string) {
-  const [state, setState] = useState<WizardState>(INITIAL_STATE)
+export function campaignToInitialWizardState(campaign: Campaign): Partial<WizardState> {
+  const rawDataRecord = (campaign.raw_data as Record<string, unknown>) || {}
+
+  const clarificationQAParsed = z
+    .array(ClarificationQASchema)
+    .safeParse(campaign.ai_clarification_questions)
+  const clarificationQA = clarificationQAParsed.success ? clarificationQAParsed.data : []
+
+  let skeleton: EditorialSkeleton | undefined
+  if (campaign.editorial_skeleton !== null) {
+    const skeletonParsed = EditorialSkeletonSchema.safeParse(campaign.editorial_skeleton)
+    skeleton = skeletonParsed.success ? skeletonParsed.data : undefined
+  }
+
+  let step: WizardStep = 2
+  if (skeleton) {
+    step = 4
+  } else if (clarificationQA.length > 0) {
+    step = 3
+  }
+
+  return {
+    step,
+    campaignId: campaign.id,
+    campaignName: campaign.name,
+    rawData: rawDataRecord,
+    objectives: (rawDataRecord.objectives as string) ?? '',
+    audience: (rawDataRecord.audience as string) ?? '',
+    kpis: (rawDataRecord.kpis as string) ?? '',
+    clarificationQA,
+    skeleton,
+    skeletonApproved: campaign.skeleton_approved_by_user,
+  }
+}
+
+export function useCampaignWizard(workspaceId: string, initialState?: Partial<WizardState>) {
+  const [state, setState] = useState<WizardState>({
+    ...INITIAL_STATE,
+    ...initialState,
+  })
 
   const setLoading = useCallback((isLoading: boolean) => {
     setState((prev) => ({ ...prev, isLoading }))
@@ -70,7 +112,7 @@ export function useCampaignWizard(workspaceId: string) {
   const goBack = useCallback(() => {
     setState((prev) => ({
       ...prev,
-      step: (Math.max(1, prev.step - 1)) as WizardStep,
+      step: Math.max(1, prev.step - 1) as WizardStep,
       error: undefined,
     }))
   }, [])
@@ -224,13 +266,22 @@ export function useCampaignWizard(workspaceId: string) {
         content: state.generatedContent,
         finalEdits: state.finalEdits,
       })
-      setState((prev) => ({ ...prev, isLoading: false, error: undefined }))
+      setState((prev) => ({ ...prev, isLoading: false, error: undefined, isComplete: true }))
       return true
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de la finalisation')
       return false
     }
   }, [state.campaignId, state.generatedContent, state.finalEdits, setLoading, setError])
+
+  const restartFromStep = useCallback((step: WizardStep) => {
+    setState((prev) => ({
+      ...prev,
+      step,
+      isComplete: false,
+      error: undefined,
+    }))
+  }, [])
 
   return {
     state,
@@ -242,5 +293,6 @@ export function useCampaignWizard(workspaceId: string) {
     submitStep6,
     goBack,
     reset,
+    restartFromStep,
   }
 }

@@ -47,11 +47,11 @@ export function StepSkeleton({ skeleton, onSubmit, onBack, isLoading }: Props) {
   const canSubmit = angle.trim().length > 0 && contentType.trim().length > 0
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-up">
       {isEmpty && (
-        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3">
-          <p className="text-amber-400 text-sm font-medium">Squelette généré manuellement</p>
-          <p className="text-amber-300/70 text-xs mt-1">
+        <div className="rounded-lg px-4 py-3 bg-status-progress/10 border border-status-progress/25 animate-scale-in">
+          <p className="text-sm font-medium text-foreground">Squelette généré manuellement</p>
+          <p className="text-xs mt-1 text-muted-foreground">
             L&apos;IA n&apos;est pas encore configurée. Remplissez le squelette éditorial
             manuellement.
           </p>
@@ -60,51 +60,53 @@ export function StepSkeleton({ skeleton, onSubmit, onBack, isLoading }: Props) {
 
       <div className="space-y-4">
         <div>
-          <Label className="text-gray-300 text-sm">
-            Angle éditorial <span className="text-red-400">*</span>
+          <Label className="text-sm text-foreground">
+            Angle éditorial <span className="text-destructive">*</span>
           </Label>
           <Input
             value={angle}
             onChange={(e) => setAngle(e.target.value)}
             placeholder="Ex : Comment notre association a transformé 200 vies en 2025"
-            className="mt-1.5 bg-gray-800 border-gray-700 text-white placeholder:text-gray-500"
+            className="mt-1.5 bg-surface-1 border-border text-foreground transition-colors duration-200"
           />
         </div>
 
         <div>
-          <Label className="text-gray-300 text-sm">
-            Messages clés <span className="text-gray-500 text-xs ml-1">(un par ligne)</span>
+          <Label className="text-sm text-foreground">
+            Messages clés{' '}
+            <span className="text-xs ml-1 text-muted-foreground/70">(un par ligne)</span>
           </Label>
           <Textarea
             value={keyMessages}
             onChange={(e) => setKeyMessages(e.target.value)}
             placeholder={"Impact concret sur les bénéficiaires\nChiffres clés de l'année\nAppel à l'action"}
-            className="mt-1.5 bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 resize-none font-mono text-sm"
+            className="mt-1.5 bg-surface-1 border-border text-foreground resize-none font-mono text-sm transition-colors duration-200"
             rows={4}
           />
         </div>
 
         <div>
-          <Label className="text-gray-300 text-sm">
-            Type de contenu <span className="text-red-400">*</span>
+          <Label className="text-sm text-foreground">
+            Type de contenu <span className="text-destructive">*</span>
           </Label>
           <Input
             value={contentType}
             onChange={(e) => setContentType(e.target.value)}
             placeholder="Ex : Bilan annuel, Annonce événement, Témoignage…"
-            className="mt-1.5 bg-gray-800 border-gray-700 text-white placeholder:text-gray-500"
+            className="mt-1.5 bg-surface-1 border-border text-foreground transition-colors duration-200"
           />
         </div>
 
         <div>
-          <Label className="text-gray-300 text-sm">
-            Ton <span className="text-gray-500 text-xs ml-1">(optionnel)</span>
+          <Label className="text-sm text-foreground">
+            Ton{' '}
+            <span className="text-xs ml-1 text-muted-foreground/70">(optionnel)</span>
           </Label>
           <Input
             value={tone}
             onChange={(e) => setTone(e.target.value)}
             placeholder="Ex : Chaleureux et inspirant, Professionnel, Engagé…"
-            className="mt-1.5 bg-gray-800 border-gray-700 text-white placeholder:text-gray-500"
+            className="mt-1.5 bg-surface-1 border-border text-foreground transition-colors duration-200"
           />
         </div>
       </div>
@@ -116,11 +118,11 @@ export function StepSkeleton({ skeleton, onSubmit, onBack, isLoading }: Props) {
         <Button
           onClick={handleSubmit}
           disabled={!canSubmit || isLoading}
-          className="bg-indigo-600 hover:bg-indigo-500"
+          className="active:scale-[0.98]"
         >
           {isLoading ? (
             <span className="flex items-center gap-2">
-              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <span className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
               Génération du contenu…
             </span>
           ) : (

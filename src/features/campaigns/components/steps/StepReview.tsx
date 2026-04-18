@@ -12,6 +12,7 @@ import {
 } from '@/lib/schemas/charter'
 import { validateAllPosts, type CharterRules } from '@/lib/ai/charter-validator'
 import { getCharter } from '@/features/charters/server/getCharter'
+import { CheckCircleIcon, AlertTriangleIcon } from 'lucide-react'
 
 interface Props {
   campaignId: string | undefined
@@ -111,45 +112,37 @@ export function StepReview({
   const hasViolations = violationCount > 0
 
   return (
-    <div className="space-y-6">
-      <div
-        className="rounded-lg p-4 space-y-2"
-        style={{
-          background: 'hsl(222, 18%, 14%)',
-          border: '1px solid hsl(222, 15%, 20%)',
-        }}
-      >
-        <p className="text-xs uppercase tracking-wide font-medium" style={{ color: 'hsl(215, 12%, 50%)' }}>
-          Campagne
-        </p>
-        <p className="font-medium" style={{ color: 'hsl(210, 20%, 94%)' }}>{campaignName}</p>
+    <div className="space-y-6 animate-fade-up">
+      {/* Campaign summary */}
+      <div className="rounded-lg p-4 space-y-2 bg-surface-1 border border-border">
+        <p className="text-meta text-muted-foreground">Campagne</p>
+        <p className="font-medium text-foreground">{campaignName}</p>
 
         {skeleton && (
           <div className="mt-3 space-y-1 text-sm">
             {skeleton.angle && (
-              <p style={{ color: 'hsl(210, 18%, 80%)' }}>
-                <span style={{ color: 'hsl(215, 12%, 50%)' }}>Angle :</span> {skeleton.angle}
+              <p className="text-foreground/80">
+                <span className="text-muted-foreground/70">Angle :</span> {skeleton.angle}
               </p>
             )}
             {skeleton.content_type && (
-              <p style={{ color: 'hsl(210, 18%, 80%)' }}>
-                <span style={{ color: 'hsl(215, 12%, 50%)' }}>Type :</span> {skeleton.content_type}
+              <p className="text-foreground/80">
+                <span className="text-muted-foreground/70">Type :</span> {skeleton.content_type}
               </p>
             )}
             {skeleton.tone && (
-              <p style={{ color: 'hsl(210, 18%, 80%)' }}>
-                <span style={{ color: 'hsl(215, 12%, 50%)' }}>Ton :</span> {skeleton.tone}
+              <p className="text-foreground/80">
+                <span className="text-muted-foreground/70">Ton :</span> {skeleton.tone}
               </p>
             )}
             {skeleton.key_messages.length > 0 && (
               <div className="mt-2">
-                <p className="text-xs mb-1" style={{ color: 'hsl(215, 12%, 50%)' }}>Messages clés :</p>
+                <p className="text-xs mb-1 text-muted-foreground/70">Messages clés :</p>
                 <ul className="space-y-0.5">
                   {skeleton.key_messages.map((msg, i) => (
                     <li
                       key={i}
-                      className="text-sm pl-3"
-                      style={{ color: 'hsl(210, 18%, 80%)', borderLeft: '1px solid hsl(222, 15%, 22%)' }}
+                      className="text-sm pl-3 border-l-2 border-border text-foreground/80"
                     >
                       {msg}
                     </li>
@@ -161,24 +154,21 @@ export function StepReview({
         )}
       </div>
 
-      {/* Charter validation panel */}
+      {/* Charter validation */}
       {charterChecked && !charterError && (
         hasViolations ? (
-          <div
-            className="rounded-lg p-4 space-y-2"
-            style={{
-              background: 'hsl(0, 70%, 18%, 0.25)',
-              border: '1px solid hsl(0, 60%, 32%, 0.4)',
-            }}
-          >
-            <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: 'hsl(0, 70%, 72%)' }}>
-              {violationCount} violation{violationCount > 1 ? 's' : ''} de la charte éditoriale
-            </p>
+          <div className="rounded-lg p-4 space-y-2 bg-destructive/5 border border-destructive/20 animate-scale-in">
+            <div className="flex items-center gap-2 text-destructive">
+              <AlertTriangleIcon className="w-4 h-4 shrink-0" />
+              <p className="text-xs font-semibold">
+                {violationCount} violation{violationCount > 1 ? 's' : ''} de la charte éditoriale
+              </p>
+            </div>
             <div className="space-y-2 text-xs">
               {Object.entries(violations).map(([platform, list]) => (
                 <div key={platform}>
-                  <p className="font-medium" style={{ color: 'hsl(0, 70%, 78%)' }}>{platform}</p>
-                  <ul className="list-disc pl-5 mt-0.5 space-y-0.5" style={{ color: 'hsl(0, 55%, 80%)' }}>
+                  <p className="font-medium text-destructive">{platform}</p>
+                  <ul className="list-disc pl-5 mt-0.5 space-y-0.5 text-destructive/80">
                     {list.map((v, i) => (
                       <li key={i}>{v}</li>
                     ))}
@@ -186,36 +176,24 @@ export function StepReview({
                 </div>
               ))}
             </div>
-            <p className="text-[11px] pt-1" style={{ color: 'hsl(0, 40%, 75%)' }}>
+            <p className="text-[11px] pt-1 text-muted-foreground/70">
               Vous pouvez tout de même finaliser — les violations seront enregistrées pour revue.
             </p>
           </div>
         ) : (
-          <div
-            className="rounded-lg px-4 py-2.5 text-xs"
-            style={{
-              background: 'hsl(142, 70%, 15%, 0.25)',
-              border: '1px solid hsl(142, 60%, 30%, 0.4)',
-              color: 'hsl(142, 60%, 75%)',
-            }}
-          >
-            ✓ Contenu conforme à la charte éditoriale
+          <div className="rounded-lg px-4 py-2.5 text-xs flex items-center gap-2 bg-status-ready/10 border border-status-ready/30 text-status-ready animate-scale-in">
+            <CheckCircleIcon className="w-4 h-4 shrink-0" />
+            Contenu conforme à la charte éditoriale
           </div>
         )
       )}
       {charterError && (
-        <div
-          className="rounded-lg px-4 py-2 text-xs"
-          style={{
-            background: 'hsl(40, 70%, 20%, 0.2)',
-            border: '1px solid hsl(40, 60%, 35%, 0.4)',
-            color: 'hsl(40, 80%, 72%)',
-          }}
-        >
+        <div className="rounded-lg px-4 py-2 text-xs bg-status-progress/10 border border-status-progress/25 text-foreground">
           Validation charte indisponible : {charterError}
         </div>
       )}
 
+      {/* Post previews */}
       {platforms.length > 0 ? (
         <div className="space-y-4 max-h-64 overflow-y-auto pr-1">
           {platforms.map((platform) => {
@@ -224,24 +202,18 @@ export function StepReview({
             return (
               <div
                 key={platform}
-                className="rounded-lg p-4"
-                style={{
-                  background: 'hsl(222, 18%, 14%)',
-                  border: platformViolations.length > 0
-                    ? '1px solid hsl(0, 60%, 32%, 0.4)'
-                    : '1px solid hsl(222, 15%, 20%)',
-                }}
+                className={`rounded-lg p-4 bg-surface-1 border ${
+                  platformViolations.length > 0 ? 'border-destructive/25' : 'border-border'
+                }`}
               >
-                <Badge variant="outline" className="text-indigo-400 border-indigo-500/50 text-xs mb-3">
+                <Badge variant="outline" className="text-meta mb-3">
                   {platform}
                 </Badge>
                 {post.caption && (
-                  <p className="text-sm whitespace-pre-wrap" style={{ color: 'hsl(210, 18%, 82%)' }}>
-                    {post.caption}
-                  </p>
+                  <p className="text-sm whitespace-pre-wrap text-foreground">{post.caption}</p>
                 )}
                 {post.hashtags.length > 0 && (
-                  <p className="text-xs mt-2 font-mono" style={{ color: 'hsl(235, 80%, 72%)' }}>
+                  <p className="text-xs mt-2 font-mono text-muted-foreground/70">
                     {post.hashtags.join(' ')}
                   </p>
                 )}
@@ -250,7 +222,7 @@ export function StepReview({
           })}
         </div>
       ) : (
-        <div className="text-center py-6 text-sm" style={{ color: 'hsl(215, 12%, 50%)' }}>
+        <div className="text-center py-6 text-sm text-muted-foreground/70">
           Aucun contenu généré — la campagne sera sauvegardée en statut Brouillon.
         </div>
       )}
@@ -260,24 +232,17 @@ export function StepReview({
           Retour
         </Button>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={onSubmit}
-            disabled={isLoading}
-          >
+          <Button variant="outline" onClick={onSubmit} disabled={isLoading}>
             {isLoading ? 'Enregistrement…' : 'Enregistrer en brouillon'}
           </Button>
           <Button
             onClick={onSubmitAndPublish}
             disabled={isLoading || platforms.length === 0}
-            style={{
-              background: 'hsl(235, 80%, 62%)',
-              color: '#fff',
-            }}
+            className="active:scale-[0.98]"
           >
             {isLoading ? (
               <span className="flex items-center gap-2">
-                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <span className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
                 Finalisation…
               </span>
             ) : (

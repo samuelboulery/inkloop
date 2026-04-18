@@ -2,6 +2,9 @@
 
 import { useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
+import { LoadingButton } from '@/components/ui/loading-button'
+import { Alert } from '@/components/ui/alert'
+import { StatusBadge, type StatusBadgeProps } from '@/components/ui/status-badge'
 import { PublishingDialog } from '@/features/publishing/components/PublishingDialog'
 import { updateCampaignContent } from '../server/wizardActions'
 import { computeNextStatus, getCharLimit } from '../utils/campaignContent'
@@ -20,11 +23,19 @@ const STATUS_LABELS: Record<Campaign['status'], string> = {
   Sent: 'Envoyé',
 }
 
-const STATUS_COLORS: Record<Campaign['status'], { color: string; bg: string }> = {
-  Draft: { color: 'hsl(215, 12%, 50%)', bg: 'hsl(215, 15%, 16%)' },
-  InProgress: { color: 'hsl(38, 90%, 65%)', bg: 'hsl(38, 80%, 18%)' },
-  Ready: { color: 'hsl(145, 65%, 60%)', bg: 'hsl(145, 50%, 14%)' },
-  Sent: { color: 'hsl(235, 80%, 72%)', bg: 'hsl(235, 60%, 18%)' },
+const STATUS_BADGE_MAP: Record<Campaign['status'], NonNullable<StatusBadgeProps['status']>> = {
+  Draft: 'draft',
+  InProgress: 'progress',
+  Ready: 'ready',
+  Sent: 'sent',
+}
+
+const PLATFORM_LABELS: Record<string, string> = {
+  twitter: 'X / Twitter',
+  x: 'X / Twitter',
+  linkedin: 'LinkedIn',
+  facebook: 'Facebook',
+  instagram: 'Instagram',
 }
 
 interface CampaignResultsProps {
@@ -46,7 +57,6 @@ export function CampaignResults({ campaign, onRestart }: CampaignResultsProps) {
   const isSent = localCampaign.status === 'Sent'
   const canPublish = localCampaign.status === 'Ready' || localCampaign.status === 'InProgress'
   const canMarkReady = localCampaign.status !== 'Ready' && localCampaign.status !== 'Sent'
-  const statusStyle = STATUS_COLORS[localCampaign.status]
 
   function handleCaptionChange(platform: string, value: string) {
     setEdits((prev) => ({ ...prev, [platform]: value }))
@@ -103,15 +113,13 @@ export function CampaignResults({ campaign, onRestart }: CampaignResultsProps) {
       {/* Header */}
       <div className="flex items-center justify-between mb-6 shrink-0">
         <div className="flex items-center gap-3">
-          <h2 className="text-base font-semibold" style={{ color: 'hsl(210, 20%, 90%)' }}>
-            {localCampaign.name}
-          </h2>
-          <span
-            className="text-[11px] font-medium px-2 py-0.5 rounded-full"
-            style={{ color: statusStyle.color, background: statusStyle.bg }}
+          <h2 className="text-base font-semibold text-foreground">{localCampaign.name}</h2>
+          <StatusBadge
+            status={STATUS_BADGE_MAP[localCampaign.status]}
+            dot={localCampaign.status === 'InProgress'}
           >
             {STATUS_LABELS[localCampaign.status]}
-          </span>
+          </StatusBadge>
         </div>
 
         {!isSent && (
@@ -121,11 +129,6 @@ export function CampaignResults({ campaign, onRestart }: CampaignResultsProps) {
               size="sm"
               className="text-xs h-8"
               onClick={() => onRestart(3)}
-              style={{
-                borderColor: 'hsl(222, 15%, 25%)',
-                color: 'hsl(210, 20%, 60%)',
-                background: 'transparent',
-              }}
             >
               Modifier les réponses
             </Button>
@@ -134,11 +137,6 @@ export function CampaignResults({ campaign, onRestart }: CampaignResultsProps) {
               size="sm"
               className="text-xs h-8"
               onClick={() => onRestart(4)}
-              style={{
-                borderColor: 'hsl(222, 15%, 25%)',
-                color: 'hsl(210, 20%, 60%)',
-                background: 'transparent',
-              }}
             >
               Modifier le squelette
             </Button>
@@ -147,12 +145,10 @@ export function CampaignResults({ campaign, onRestart }: CampaignResultsProps) {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto space-y-6 pr-1">
+      <div className="flex-1 overflow-y-auto space-y-8 pr-1">
         {platforms.length === 0 && (
           <div className="flex flex-col items-center gap-4 py-16">
-            <p className="text-sm text-center" style={{ color: 'hsl(215, 12%, 40%)' }}>
-              Aucun contenu généré.
-            </p>
+            <p className="text-sm text-center text-muted-foreground">Aucun contenu généré.</p>
           </div>
         )}
 
@@ -160,57 +156,58 @@ export function CampaignResults({ campaign, onRestart }: CampaignResultsProps) {
           const limit = getCharLimit(platform)
           const caption = edits[platform] ?? post.caption
           const overLimit = caption.length > limit
+          const platformLabel = PLATFORM_LABELS[platform.toLowerCase()] ?? platform
 
           return (
-            <div key={platform}>
-              <div className="flex items-center justify-between mb-2">
-                <span
-                  className="text-xs font-medium capitalize"
-                  style={{ color: 'hsl(215, 12%, 60%)' }}
-                >
-                  {platform}
-                </span>
-                <span
-                  className="text-[11px]"
-                  style={{ color: overLimit ? 'hsl(0, 70%, 60%)' : 'hsl(215, 12%, 40%)' }}
-                >
-                  {caption.length} / {limit}
-                </span>
+            <div key={platform} className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-meta text-muted-foreground">{platformLabel}</span>
               </div>
-              <textarea
-                value={caption}
-                readOnly={isSent || isPending}
-                onChange={(e) => handleCaptionChange(platform, e.target.value)}
-                rows={4}
-                className="w-full rounded-lg px-3 py-2.5 text-sm resize-y"
-                style={{
-                  background: 'hsl(222, 18%, 8%)',
-                  border: `1px solid ${overLimit ? 'hsl(0, 60%, 40%)' : 'hsl(222, 15%, 20%)'}`,
-                  color: 'hsl(210, 20%, 88%)',
-                  outline: 'none',
-                }}
-              />
-              {post.hashtags.length > 0 && (
-                <p className="mt-1.5 text-[11px]" style={{ color: 'hsl(235, 60%, 60%)' }}>
-                  {post.hashtags.map((h) => `#${h}`).join(' ')}
-                </p>
-              )}
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Editor */}
+                <div className="flex flex-col gap-2">
+                  <textarea
+                    value={caption}
+                    readOnly={isSent || isPending}
+                    onChange={(e) => handleCaptionChange(platform, e.target.value)}
+                    rows={6}
+                    className={`w-full rounded-lg px-3 py-2.5 text-sm resize-y transition-colors duration-200 bg-surface-1 text-foreground border focus:outline-none focus:ring-2 focus:ring-ring/30 focus:border-ring ${
+                      overLimit ? 'border-destructive' : 'border-border'
+                    }`}
+                  />
+                  <div className="flex items-center justify-between">
+                    {post.hashtags.length > 0 ? (
+                      <p className="text-meta text-muted-foreground truncate">
+                        {post.hashtags.map((h) => `#${h}`).join(' ')}
+                      </p>
+                    ) : (
+                      <span />
+                    )}
+                    <CharCounterRing length={caption.length} limit={limit} />
+                  </div>
+                </div>
+
+                {/* Preview */}
+                <PlatformPreview
+                  platform={platformLabel}
+                  caption={caption}
+                  hashtags={post.hashtags}
+                />
+              </div>
             </div>
           )
         })}
       </div>
 
       {error && (
-        <p className="text-xs mt-3" style={{ color: 'hsl(0, 70%, 60%)' }}>
-          {error}
-        </p>
+        <div className="mt-3 shrink-0">
+          <Alert variant="error">{error}</Alert>
+        </div>
       )}
 
       {!isSent && (
-        <div
-          className="flex items-center justify-end gap-2 mt-4 pt-4 border-t shrink-0"
-          style={{ borderColor: 'hsl(222, 15%, 19%)' }}
-        >
+        <div className="flex items-center justify-end gap-2 mt-4 pt-4 border-t border-border shrink-0">
           {canMarkReady && (
             <Button
               variant="outline"
@@ -218,39 +215,30 @@ export function CampaignResults({ campaign, onRestart }: CampaignResultsProps) {
               disabled={isPending}
               onClick={handleMarkReady}
               className="text-xs h-8"
-              style={{
-                borderColor: 'hsl(222, 15%, 25%)',
-                color: 'hsl(210, 20%, 70%)',
-                background: 'transparent',
-              }}
             >
               Marquer comme prêt
             </Button>
           )}
           {canPublish && (
             <Button
+              variant="secondary"
               size="sm"
               disabled={isPending}
               onClick={() => setPublishOpen(true)}
               className="text-xs h-8"
-              style={{
-                background: 'hsl(235, 60%, 20%)',
-                color: 'hsl(235, 90%, 78%)',
-                border: '1px solid hsl(235, 60%, 28%)',
-              }}
             >
               Publier
             </Button>
           )}
-          <Button
+          <LoadingButton
             size="sm"
-            disabled={isPending}
+            loading={isPending}
+            loadingText="Sauvegarde…"
             onClick={handleSave}
             className="text-xs h-8"
-            style={{ background: 'hsl(235, 80%, 62%)', color: '#fff', border: 'none' }}
           >
-            {isPending ? 'Sauvegarde…' : 'Sauvegarder'}
-          </Button>
+            Sauvegarder
+          </LoadingButton>
         </div>
       )}
 
@@ -262,6 +250,111 @@ export function CampaignResults({ campaign, onRestart }: CampaignResultsProps) {
           onOpenChange={setPublishOpen}
         />
       )}
+    </div>
+  )
+}
+
+interface CharCounterRingProps {
+  length: number
+  limit: number
+}
+
+function CharCounterRing({ length, limit }: CharCounterRingProps) {
+  const ratio = limit > 0 ? length / limit : 0
+  const clamped = Math.min(ratio, 1)
+  const radius = 14
+  const circumference = 2 * Math.PI * radius
+  const dashOffset = circumference * (1 - clamped)
+  const overLimit = ratio > 1
+  const nearLimit = ratio >= 0.9 && !overLimit
+
+  const ringColor = overLimit
+    ? 'text-destructive'
+    : nearLimit
+      ? 'text-signal'
+      : 'text-foreground'
+  const labelColor = overLimit
+    ? 'text-destructive'
+    : nearLimit
+      ? 'text-signal'
+      : 'text-muted-foreground'
+
+  return (
+    <div className="flex items-center gap-2">
+      <span className={`text-meta tabular-nums ${labelColor}`}>
+        {length} / {limit}
+      </span>
+      <svg
+        width={36}
+        height={36}
+        viewBox="0 0 36 36"
+        role="img"
+        aria-label={`${length} caractères sur ${limit}`}
+        className="shrink-0"
+      >
+        <circle
+          cx="18"
+          cy="18"
+          r={radius}
+          fill="none"
+          strokeWidth="2"
+          className="text-border"
+          stroke="currentColor"
+        />
+        <circle
+          cx="18"
+          cy="18"
+          r={radius}
+          fill="none"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={dashOffset}
+          transform="rotate(-90 18 18)"
+          className={`${ringColor} transition-[stroke-dashoffset,color] duration-200`}
+          stroke="currentColor"
+        />
+      </svg>
+    </div>
+  )
+}
+
+interface PlatformPreviewProps {
+  platform: string
+  caption: string
+  hashtags: string[]
+}
+
+function PlatformPreview({ platform, caption, hashtags }: PlatformPreviewProps) {
+  return (
+    <div className="rounded-lg border border-border bg-surface-2 p-4 flex flex-col gap-3">
+      <div className="flex items-center gap-2.5">
+        <div
+          aria-hidden="true"
+          className="size-8 rounded-full bg-foreground/10 border border-border"
+        />
+        <div className="flex flex-col gap-0.5 min-w-0">
+          <span className="text-xs font-medium text-foreground truncate">Votre marque</span>
+          <span className="text-meta text-muted-foreground">{platform}</span>
+        </div>
+      </div>
+
+      <p className="text-sm text-foreground whitespace-pre-wrap break-words leading-relaxed">
+        {caption || (
+          <span className="text-muted-foreground italic">Aperçu du contenu…</span>
+        )}
+      </p>
+
+      {hashtags.length > 0 && (
+        <p className="text-xs text-signal/80 break-words">
+          {hashtags.map((h) => `#${h}`).join(' ')}
+        </p>
+      )}
+
+      <div className="mt-1 pt-3 border-t border-border flex items-center justify-between text-meta text-muted-foreground">
+        <span>Aperçu</span>
+        <span className="tabular-nums">{caption.length} car.</span>
+      </div>
     </div>
   )
 }

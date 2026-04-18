@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { SettingsPanel } from './SettingsPanel'
-import { theme } from '@/lib/ui/theme'
 import { PlusIcon, Trash2Icon } from 'lucide-react'
 
 type SocialNetworks = z.infer<typeof SocialNetworksSchema>
@@ -118,32 +117,29 @@ export function NetworksSettings({ workspace }: NetworksSettingsProps) {
             return (
               <div
                 key={platform}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-md"
-                style={{
-                  background: theme.BG,
-                  border: `1px solid ${enabled ? theme.ACCENT : theme.BORDER}`,
-                }}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-md bg-background border ${
+                  enabled ? 'border-primary' : 'border-border'
+                }`}
               >
                 <button
                   type="button"
                   onClick={() => togglePlatform(platform)}
-                  className="w-9 h-5 rounded-full transition-colors relative shrink-0"
-                  style={{
-                    background: enabled ? theme.ACCENT : theme.BORDER,
-                  }}
+                  className={`w-9 h-5 rounded-full transition-colors relative shrink-0 cursor-pointer ${
+                    enabled ? 'bg-primary' : 'bg-border'
+                  }`}
                   aria-pressed={enabled}
                   aria-label={`Activer ${platform}`}
                 >
                   <span
-                    className="absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform"
-                    style={{
-                      left: enabled ? '18px' : '2px',
-                    }}
+                    className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${
+                      enabled ? 'left-[18px]' : 'left-0.5'
+                    }`}
                   />
                 </button>
                 <span
-                  className="text-sm font-medium flex-1"
-                  style={{ color: enabled ? theme.TEXT : theme.TEXT_MUTED }}
+                  className={`text-sm font-medium flex-1 ${
+                    enabled ? 'text-foreground' : 'text-muted-foreground'
+                  }`}
                 >
                   {platform}
                 </span>
@@ -154,20 +150,15 @@ export function NetworksSettings({ workspace }: NetworksSettingsProps) {
                   onChange={(e) => updateHandle(platform, e.target.value)}
                   disabled={!enabled}
                   className="h-7 text-xs w-52"
-                  style={{
-                    background: theme.SURFACE,
-                    border: `1px solid ${theme.BORDER}`,
-                    color: theme.TEXT,
-                  }}
                 />
                 {!isKnown && (
                   <button
                     type="button"
                     onClick={() => removePlatform(platform)}
-                    className="p-1.5 rounded-md hover:bg-white/5"
+                    className="p-1.5 rounded-md hover:bg-muted cursor-pointer"
                     aria-label={`Retirer ${platform}`}
                   >
-                    <Trash2Icon className="w-3.5 h-3.5" style={{ color: theme.TEXT_MUTED }} />
+                    <Trash2Icon className="w-3.5 h-3.5 text-destructive" />
                   </button>
                 )}
               </div>
@@ -175,11 +166,8 @@ export function NetworksSettings({ workspace }: NetworksSettingsProps) {
           })}
         </div>
 
-        <div
-          className="mt-5 pt-5"
-          style={{ borderTop: `1px solid ${theme.BORDER}` }}
-        >
-          <Label className="text-xs font-medium" style={{ color: theme.TEXT_MUTED }}>
+        <div className="mt-5 pt-5 border-t border-border">
+          <Label className="text-meta text-muted-foreground">
             Ajouter une plateforme personnalisée
           </Label>
           <div className="flex gap-2 mt-1.5">
@@ -188,11 +176,6 @@ export function NetworksSettings({ workspace }: NetworksSettingsProps) {
               onChange={(e) => setCustomName(e.target.value)}
               placeholder="Ex : Reddit"
               className="h-9 text-sm flex-1"
-              style={{
-                background: theme.BG,
-                border: `1px solid ${theme.BORDER}`,
-                color: theme.TEXT,
-              }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault()
@@ -203,12 +186,9 @@ export function NetworksSettings({ workspace }: NetworksSettingsProps) {
             <Button
               type="button"
               onClick={addCustom}
+              variant="outline"
+              size="sm"
               className="h-9 text-xs font-medium gap-1.5 px-3"
-              style={{
-                background: theme.BG,
-                border: `1px solid ${theme.BORDER}`,
-                color: theme.TEXT,
-              }}
             >
               <PlusIcon className="w-3.5 h-3.5" />
               Ajouter
@@ -221,13 +201,13 @@ export function NetworksSettings({ workspace }: NetworksSettingsProps) {
             type="button"
             onClick={handleSave}
             disabled={saving}
+            size="sm"
             className="h-8 text-xs font-medium px-4"
-            style={{ background: theme.ACCENT, color: '#fff', border: 'none' }}
           >
             {saving ? 'Sauvegarde…' : 'Sauvegarder'}
           </Button>
-          {error && <span className="text-xs" style={{ color: theme.DANGER }}>{error}</span>}
-          {success && <span className="text-xs" style={{ color: theme.SUCCESS }}>Enregistré.</span>}
+          {error && <span className="text-xs text-destructive">{error}</span>}
+          {success && <span className="text-xs text-foreground">Enregistré.</span>}
         </div>
       </SettingsPanel>
     </div>

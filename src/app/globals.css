@@ -39,6 +39,15 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-signal: var(--signal);
+  --color-signal-foreground: var(--signal-foreground);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-status-draft: var(--status-draft);
+  --color-status-progress: var(--status-progress);
+  --color-status-ready: var(--status-ready);
+  --color-status-sent: var(--status-sent);
+  --color-grid-line: var(--grid-line);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -66,7 +75,16 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --ring: oklch(0.488 0.243 264.376);
+  --signal: oklch(0.488 0.243 264.376);
+  --signal-foreground: oklch(0.985 0 0);
+  --surface-1: oklch(0.985 0 0);
+  --surface-2: oklch(0.97 0 0);
+  --status-draft: oklch(0.7 0 0);
+  --status-progress: oklch(0.488 0.243 264.376);
+  --status-ready: oklch(0.68 0.16 160);
+  --status-sent: oklch(0.45 0.02 264);
+  --grid-line: color-mix(in oklch, var(--foreground) 8%, transparent);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -82,18 +100,18 @@
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
 
-  /* inkloop brand */
-  --ink-bg: 222 20% 8%;
-  --ink-surface: 222 18% 11%;
-  --ink-surface-2: 222 15% 15%;
-  --ink-border: 222 15% 20%;
-  --ink-border-strong: 222 12% 26%;
-  --ink-text: 210 20% 94%;
-  --ink-text-muted: 215 12% 55%;
-  --ink-text-subtle: 215 10% 38%;
-  --ink-accent: 235 80% 62%;
-  --ink-accent-hover: 235 75% 68%;
-  --ink-accent-muted: 235 60% 20%;
+  /* inkloop brand — light B&W */
+  --ink-bg: 0 0% 100%;
+  --ink-surface: 0 0% 97%;
+  --ink-surface-2: 0 0% 94%;
+  --ink-border: 0 0% 90%;
+  --ink-border-strong: 0 0% 80%;
+  --ink-text: 0 0% 4%;
+  --ink-text-muted: 0 0% 45%;
+  --ink-text-subtle: 0 0% 64%;
+  --ink-accent: 0 0% 4%;
+  --ink-accent-hover: 0 0% 15%;
+  --ink-accent-muted: 0 0% 94%;
 }
 
 .dark {
@@ -114,7 +132,16 @@
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --ring: oklch(0.62 0.21 264.376);
+  --signal: oklch(0.62 0.21 264.376);
+  --signal-foreground: oklch(0.985 0 0);
+  --surface-1: oklch(0.18 0 0);
+  --surface-2: oklch(0.22 0 0);
+  --status-draft: oklch(0.5 0 0);
+  --status-progress: oklch(0.62 0.21 264.376);
+  --status-ready: oklch(0.7 0.16 160);
+  --status-sent: oklch(0.55 0.05 264);
+  --grid-line: color-mix(in oklch, var(--foreground) 8%, transparent);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -140,6 +167,17 @@
   html {
     @apply font-sans;
   }
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="tab"]:not(:disabled),
+  select:not(:disabled),
+  summary {
+    cursor: pointer;
+  }
+  button:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
 }
 
 /* inkloop utility classes */
@@ -161,4 +199,120 @@
   .border-ink { border-color: hsl(var(--ink-border)); }
   .border-ink-strong { border-color: hsl(var(--ink-border-strong)); }
   .hover\:ink-accent:hover { background-color: hsl(var(--ink-accent-hover)); }
+}
+
+/* Micro-animations */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes fade-out {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-4px); }
+}
+
+@keyframes progress-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@layer utilities {
+  .animate-fade-up {
+    animation: fade-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .animate-fade-in {
+    animation: fade-in 0.25s ease-out both;
+  }
+  .animate-scale-in {
+    animation: scale-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .animate-fade-out {
+    animation: fade-out 0.18s cubic-bezier(0.4, 0, 1, 1) both;
+  }
+  .animate-progress-pulse {
+    animation: progress-pulse 1.6s ease-in-out infinite;
+  }
+  .stagger-0 { animation-delay: 0ms; }
+  .stagger-1 { animation-delay: 60ms; }
+  .stagger-2 { animation-delay: 120ms; }
+  .stagger-3 { animation-delay: 180ms; }
+  .stagger-4 { animation-delay: 240ms; }
+  .stagger-5 { animation-delay: 300ms; }
+  .stagger-6 { animation-delay: 360ms; }
+  .stagger-7 { animation-delay: 420ms; }
+  .stagger-8 { animation-delay: 480ms; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up,
+  .animate-fade-in,
+  .animate-scale-in,
+  .animate-fade-out,
+  .animate-progress-pulse {
+    animation: none !important;
+  }
+}
+
+/* Typography scale — Swiss Terminal */
+@utility text-display {
+  font-family: var(--font-sans);
+  font-size: clamp(2.25rem, 4vw, 3rem);
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  font-weight: 600;
+}
+
+@utility text-heading {
+  font-family: var(--font-sans);
+  font-size: 1.5rem;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  font-weight: 600;
+}
+
+@utility text-body {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+@utility text-meta {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  line-height: 1.4;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+@utility text-code {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+/* Background patterns — terminal grid */
+@utility bg-grid {
+  background-image:
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+@utility bg-grid-fine {
+  background-image:
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size: 16px 16px;
 }

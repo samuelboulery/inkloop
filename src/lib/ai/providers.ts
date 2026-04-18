@@ -53,7 +53,7 @@ export class OllamaProvider implements AIProvider {
   private client: OpenAI
   modelId: string
 
-  constructor(modelId = 'llama3.2') {
+  constructor(modelId = process.env.OLLAMA_DEFAULT_MODEL ?? 'llama3.2') {
     const baseURL = `${process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434'}/v1`
     this.client = new OpenAI({ apiKey: 'ollama', baseURL })
     this.modelId = modelId
@@ -166,7 +166,9 @@ export function resolveProviderFor(modelId: string): AIProvider {
   if (!process.env.OLLAMA_BASE_URL) {
     throw new Error(`Modèle ${modelId} non reconnu et OLLAMA_BASE_URL non configuré`)
   }
-  return new OllamaProvider(modelId)
+  if (normalized === 'ollama') return new OllamaProvider()
+  const ollamaModelId = normalized.startsWith('ollama/') ? modelId.slice('ollama/'.length) : modelId
+  return new OllamaProvider(ollamaModelId)
 }
 
 export function createProvider(modelId?: string): AIProvider {

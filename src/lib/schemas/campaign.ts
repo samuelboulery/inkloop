@@ -5,7 +5,7 @@ export const CampaignStatusSchema = z.enum(['Draft', 'InProgress', 'Ready', 'Sen
 export const ClarificationQASchema = z.object({
   question: z.string(),
   answer: z.string(),
-  category: z.enum(['tone', 'structure', 'audience', 'other']).default('other'),
+  category: z.enum(['tone', 'structure', 'audience', 'other']).catch('other'),
 })
 
 export const EditorialSkeletonSchema = z.object({

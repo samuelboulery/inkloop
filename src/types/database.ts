@@ -18,6 +18,7 @@ export interface Database {
           system_prompt_global: string | null
           social_networks: Json
           platform_specific_prompts: Json
+          campaign_targets: Json
           created_at: string
           updated_at: string
         }
@@ -31,6 +32,7 @@ export interface Database {
           system_prompt_global?: string | null
           social_networks?: Json
           platform_specific_prompts?: Json
+          campaign_targets?: Json
           created_at?: string
           updated_at?: string
         }
@@ -44,6 +46,7 @@ export interface Database {
           system_prompt_global?: string | null
           social_networks?: Json
           platform_specific_prompts?: Json
+          campaign_targets?: Json
           updated_at?: string
         }
         Relationships: []
@@ -75,6 +78,7 @@ export interface Database {
           name: string
           description: string | null
           fields: Json
+          system_prompt: string | null
           created_at: string
           updated_at: string
           created_by: string | null
@@ -84,6 +88,7 @@ export interface Database {
           workspace_id: string
           name: string
           description?: string | null
+          system_prompt?: string | null
           fields?: Json
           created_at?: string
           updated_at?: string
@@ -92,6 +97,7 @@ export interface Database {
         Update: {
           name?: string
           description?: string | null
+          system_prompt?: string | null
           fields?: Json
           updated_at?: string
         }

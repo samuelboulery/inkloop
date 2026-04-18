@@ -17,7 +17,9 @@ function toJson<T>(value: T): Json {
 export async function createTemplate(input: CreateTemplateInput): Promise<Template> {
   const parsed = CreateTemplateSchema.parse(input)
   const supabase = await createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) throw new Error('Non authentifié')
 
   const { data, error } = await supabase
@@ -26,6 +28,7 @@ export async function createTemplate(input: CreateTemplateInput): Promise<Templa
       workspace_id: parsed.workspace_id,
       name: parsed.name,
       description: parsed.description ?? null,
+      system_prompt: parsed.system_prompt ?? null,
       fields: toJson(parsed.fields),
       created_by: user.id,
     })
@@ -40,18 +43,22 @@ export async function createTemplate(input: CreateTemplateInput): Promise<Templa
 export async function updateTemplate(input: UpdateTemplateInput): Promise<Template> {
   const parsed = UpdateTemplateSchema.parse(input)
   const supabase = await createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) throw new Error('Non authentifié')
 
   const payload: {
     name?: string
     description?: string | null
+    system_prompt?: string | null
     fields?: Json
     updated_at: string
   } = { updated_at: new Date().toISOString() }
 
   if (parsed.name !== undefined) payload.name = parsed.name
   if (parsed.description !== undefined) payload.description = parsed.description ?? null
+  if (parsed.system_prompt !== undefined) payload.system_prompt = parsed.system_prompt ?? null
   if (parsed.fields !== undefined) payload.fields = toJson(parsed.fields)
 
   const { data, error } = await supabase
@@ -68,7 +75,9 @@ export async function updateTemplate(input: UpdateTemplateInput): Promise<Templa
 
 export async function deleteTemplate(input: { id: string; workspaceId: string }): Promise<void> {
   const supabase = await createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) throw new Error('Non authentifié')
 
   const { error } = await supabase.from('templates').delete().eq('id', input.id)

@@ -18,6 +18,7 @@ export const CreateWorkspaceSchema = z.object({
   system_prompt_global: z.string().optional().nullable(),
   social_networks: SocialNetworksSchema.default({}),
   platform_specific_prompts: z.record(z.string(), z.string()).default({}),
+  campaign_targets: z.array(z.string()).default([]),
 })
 
 export const UpdateWorkspaceSchema = CreateWorkspaceSchema.partial().extend({

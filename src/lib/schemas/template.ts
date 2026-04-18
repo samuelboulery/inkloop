@@ -14,6 +14,7 @@ export const CreateTemplateSchema = z.object({
   workspace_id: z.string().uuid(),
   name: z.string().min(1).max(100),
   description: z.string().optional().nullable(),
+  system_prompt: z.string().optional().nullable(),
   fields: z.array(TemplateFieldSchema).min(1, 'Au moins un champ est requis'),
 })
 

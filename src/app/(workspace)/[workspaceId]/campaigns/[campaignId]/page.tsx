@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import { getCampaign } from '@/features/campaigns/server/getCampaign'
+import { getWorkspace } from '@/features/workspaces/server/getWorkspaces'
 import { CampaignDetailPage } from '@/features/campaigns/components/CampaignDetailPage'
 
 export default async function CampaignPage({
@@ -8,7 +9,19 @@ export default async function CampaignPage({
   params: Promise<{ workspaceId: string; campaignId: string }>
 }) {
   const { workspaceId, campaignId } = await params
-  const campaign = await getCampaign(campaignId, workspaceId)
+  const [campaign, workspace] = await Promise.all([
+    getCampaign(campaignId, workspaceId),
+    getWorkspace(workspaceId),
+  ])
   if (!campaign) notFound()
-  return <CampaignDetailPage campaign={campaign} workspaceId={workspaceId} />
+  const campaignTargets = Array.isArray(workspace?.campaign_targets)
+    ? (workspace.campaign_targets as string[])
+    : []
+  return (
+    <CampaignDetailPage
+      campaign={campaign}
+      workspaceId={workspaceId}
+      campaignTargets={campaignTargets}
+    />
+  )
 }

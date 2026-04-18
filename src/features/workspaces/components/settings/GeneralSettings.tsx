@@ -9,14 +9,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { SettingsPanel } from './SettingsPanel'
-import { theme } from '@/lib/ui/theme'
 
 const LLM_OPTIONS = [
   { value: 'gpt-4o', label: 'GPT-4o (OpenAI)' },
   { value: 'gpt-4o-mini', label: 'GPT-4o Mini (OpenAI)' },
   { value: 'claude-opus-4-7', label: 'Claude Opus (Anthropic)' },
   { value: 'claude-sonnet-4-6', label: 'Claude Sonnet (Anthropic)' },
-  { value: 'ollama/llama3', label: 'Llama 3 (Ollama local)' },
+  { value: 'ollama', label: 'Ollama (modèle local)' },
 ] as const
 
 interface GeneralSettingsProps {
@@ -80,7 +79,7 @@ export function GeneralSettings({ workspace }: GeneralSettingsProps) {
       >
         <div className="space-y-5">
           <div>
-            <Label htmlFor="ws-name" className="text-xs font-medium" style={{ color: theme.TEXT_MUTED }}>
+            <Label htmlFor="ws-name" className="text-meta text-muted-foreground">
               Nom du workspace
             </Label>
             <Input
@@ -88,17 +87,12 @@ export function GeneralSettings({ workspace }: GeneralSettingsProps) {
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               className="mt-1.5 h-9 text-sm"
-              style={{
-                background: theme.BG,
-                border: `1px solid ${theme.BORDER}`,
-                color: theme.TEXT,
-              }}
               required
             />
           </div>
 
           <div>
-            <Label htmlFor="ws-logo" className="text-xs font-medium" style={{ color: theme.TEXT_MUTED }}>
+            <Label htmlFor="ws-logo" className="text-meta text-muted-foreground">
               URL du logo (optionnel)
             </Label>
             <Input
@@ -108,18 +102,11 @@ export function GeneralSettings({ workspace }: GeneralSettingsProps) {
               onChange={(e) => setForm({ ...form, logo_url: e.target.value })}
               placeholder="https://…"
               className="mt-1.5 h-9 text-sm"
-              style={{
-                background: theme.BG,
-                border: `1px solid ${theme.BORDER}`,
-                color: theme.TEXT,
-              }}
             />
           </div>
 
           <div>
-            <Label className="text-xs font-medium" style={{ color: theme.TEXT_MUTED }}>
-              Type
-            </Label>
+            <Label className="text-meta text-muted-foreground">Type</Label>
             <div className="flex gap-2 mt-1.5">
               {(['Personal', 'Association'] as const).map((t) => {
                 const active = form.type === t
@@ -128,12 +115,12 @@ export function GeneralSettings({ workspace }: GeneralSettingsProps) {
                     key={t}
                     type="button"
                     onClick={() => setForm({ ...form, type: t })}
-                    className="py-2 px-3.5 rounded-md text-xs font-medium transition-colors"
-                    style={{
-                      background: active ? theme.ACCENT : theme.BG,
-                      border: `1px solid ${active ? theme.ACCENT : theme.BORDER}`,
-                      color: active ? '#fff' : theme.TEXT,
-                    }}
+                    className={
+                      'py-2 px-3.5 rounded-md text-xs font-medium transition-colors cursor-pointer ' +
+                      (active
+                        ? 'bg-primary text-primary-foreground border border-primary'
+                        : 'bg-background text-foreground border border-border hover:bg-muted')
+                    }
                   >
                     {t === 'Personal' ? 'Profil personnel' : 'Association'}
                   </button>
@@ -143,19 +130,14 @@ export function GeneralSettings({ workspace }: GeneralSettingsProps) {
           </div>
 
           <div>
-            <Label htmlFor="ws-model" className="text-xs font-medium" style={{ color: theme.TEXT_MUTED }}>
+            <Label htmlFor="ws-model" className="text-meta text-muted-foreground">
               Modèle IA par défaut
             </Label>
             <select
               id="ws-model"
               value={form.default_llm_model}
               onChange={(e) => setForm({ ...form, default_llm_model: e.target.value })}
-              className="mt-1.5 w-full px-3 py-2 rounded-md text-sm focus:outline-none focus:ring-2"
-              style={{
-                background: theme.BG,
-                border: `1px solid ${theme.BORDER}`,
-                color: theme.TEXT,
-              }}
+              className="mt-1.5 w-full px-3 py-2 rounded-md text-sm bg-background border border-border text-foreground focus-visible:outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
             >
               {LLM_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -167,20 +149,11 @@ export function GeneralSettings({ workspace }: GeneralSettingsProps) {
         </div>
 
         <div className="flex items-center gap-3 mt-6">
-          <Button
-            type="submit"
-            disabled={saving}
-            className="h-8 text-xs font-medium px-4"
-            style={{
-              background: theme.ACCENT,
-              color: '#fff',
-              border: 'none',
-            }}
-          >
+          <Button type="submit" disabled={saving} size="sm" className="text-xs font-medium">
             {saving ? 'Sauvegarde…' : 'Sauvegarder'}
           </Button>
-          {error && <span className="text-xs" style={{ color: theme.DANGER }}>{error}</span>}
-          {success && <span className="text-xs" style={{ color: theme.SUCCESS }}>Enregistré.</span>}
+          {error && <span className="text-xs text-destructive">{error}</span>}
+          {success && <span className="text-xs text-emerald-600">Enregistré.</span>}
         </div>
       </SettingsPanel>
     </form>

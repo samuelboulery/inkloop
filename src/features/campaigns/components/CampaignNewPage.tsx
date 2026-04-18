@@ -5,9 +5,10 @@ import { CampaignWizard } from './CampaignWizard'
 
 interface CampaignNewPageProps {
   workspaceId: string
+  campaignTargets?: string[]
 }
 
-export function CampaignNewPage({ workspaceId }: CampaignNewPageProps) {
+export function CampaignNewPage({ workspaceId, campaignTargets }: CampaignNewPageProps) {
   const router = useRouter()
 
   function handleComplete(campaignId: string) {
@@ -16,7 +17,11 @@ export function CampaignNewPage({ workspaceId }: CampaignNewPageProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      <CampaignWizard workspaceId={workspaceId} onComplete={handleComplete} />
+      <CampaignWizard
+        workspaceId={workspaceId}
+        campaignTargets={campaignTargets}
+        onComplete={handleComplete}
+      />
     </div>
   )
 }

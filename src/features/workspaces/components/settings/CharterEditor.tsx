@@ -15,7 +15,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { SettingsPanel } from './SettingsPanel'
-import { theme } from '@/lib/ui/theme'
 import { PlusIcon, XIcon } from 'lucide-react'
 
 interface CharterEditorProps {
@@ -84,47 +83,30 @@ export function CharterEditor({ workspaceId, charter }: CharterEditorProps) {
       >
         <div className="space-y-5">
           <div>
-            <Label className="text-xs font-medium" style={{ color: theme.TEXT_MUTED }}>
-              Ton de la voix
-            </Label>
+            <Label className="text-meta text-muted-foreground">Ton de la voix</Label>
             <Textarea
               value={state.tone_guidelines}
               onChange={(e) => setState({ ...state, tone_guidelines: e.target.value })}
               placeholder="Ex : bienveillant, direct, expert mais accessible…"
               rows={4}
               className="mt-1.5 text-sm"
-              style={{
-                background: theme.BG,
-                border: `1px solid ${theme.BORDER}`,
-                color: theme.TEXT,
-              }}
             />
           </div>
 
           <div>
-            <Label className="text-xs font-medium" style={{ color: theme.TEXT_MUTED }}>
-              Guidelines de marque
-            </Label>
+            <Label className="text-meta text-muted-foreground">Guidelines de marque</Label>
             <Textarea
               value={state.brand_guidelines}
               onChange={(e) => setState({ ...state, brand_guidelines: e.target.value })}
               placeholder="Positionnement, valeurs, références visuelles…"
               rows={4}
               className="mt-1.5 text-sm"
-              style={{
-                background: theme.BG,
-                border: `1px solid ${theme.BORDER}`,
-                color: theme.TEXT,
-              }}
             />
           </div>
         </div>
       </SettingsPanel>
 
-      <SettingsPanel
-        title="Vocabulaire"
-        description="Mots interdits et substitutions préférées."
-      >
+      <SettingsPanel title="Vocabulaire" description="Mots interdits et substitutions préférées.">
         <div className="space-y-5">
           <TagListEditor
             label="Mots interdits"
@@ -156,9 +138,7 @@ export function CharterEditor({ workspaceId, charter }: CharterEditorProps) {
         <div className="space-y-5">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs font-medium" style={{ color: theme.TEXT_MUTED }}>
-                Longueur minimale
-              </Label>
+              <Label className="text-meta text-muted-foreground">Longueur minimale</Label>
               <Input
                 type="number"
                 min={1}
@@ -173,17 +153,10 @@ export function CharterEditor({ workspaceId, charter }: CharterEditorProps) {
                   })
                 }
                 className="mt-1.5 h-9 text-sm"
-                style={{
-                  background: theme.BG,
-                  border: `1px solid ${theme.BORDER}`,
-                  color: theme.TEXT,
-                }}
               />
             </div>
             <div>
-              <Label className="text-xs font-medium" style={{ color: theme.TEXT_MUTED }}>
-                Longueur maximale
-              </Label>
+              <Label className="text-meta text-muted-foreground">Longueur maximale</Label>
               <Input
                 type="number"
                 min={1}
@@ -198,11 +171,6 @@ export function CharterEditor({ workspaceId, charter }: CharterEditorProps) {
                   })
                 }
                 className="mt-1.5 h-9 text-sm"
-                style={{
-                  background: theme.BG,
-                  border: `1px solid ${theme.BORDER}`,
-                  color: theme.TEXT,
-                }}
               />
             </div>
           </div>
@@ -236,13 +204,13 @@ export function CharterEditor({ workspaceId, charter }: CharterEditorProps) {
             type="button"
             onClick={handleSave}
             disabled={pending}
-            className="h-8 text-xs font-medium px-4"
-            style={{ background: theme.ACCENT, color: '#fff', border: 'none' }}
+            size="sm"
+            className="text-xs font-medium"
           >
             {pending ? 'Sauvegarde…' : 'Sauvegarder la charte'}
           </Button>
-          {error && <span className="text-xs" style={{ color: theme.DANGER }}>{error}</span>}
-          {success && <span className="text-xs" style={{ color: theme.SUCCESS }}>Enregistré.</span>}
+          {error && <span className="text-xs text-destructive">{error}</span>}
+          {success && <span className="text-xs text-emerald-600">Enregistré.</span>}
         </div>
       </SettingsPanel>
     </div>
@@ -275,9 +243,7 @@ function TagListEditor({ label, placeholder, values, onChange }: TagListEditorPr
 
   return (
     <div>
-      <Label className="text-xs font-medium" style={{ color: theme.TEXT_MUTED }}>
-        {label}
-      </Label>
+      <Label className="text-meta text-muted-foreground">{label}</Label>
       <div className="flex gap-2 mt-1.5">
         <Input
           value={draft}
@@ -290,21 +256,13 @@ function TagListEditor({ label, placeholder, values, onChange }: TagListEditorPr
             }
           }}
           className="h-9 text-sm flex-1"
-          style={{
-            background: theme.BG,
-            border: `1px solid ${theme.BORDER}`,
-            color: theme.TEXT,
-          }}
         />
         <Button
           type="button"
           onClick={add}
+          variant="outline"
+          size="sm"
           className="h-9 text-xs font-medium gap-1.5 px-3"
-          style={{
-            background: theme.BG,
-            border: `1px solid ${theme.BORDER}`,
-            color: theme.TEXT,
-          }}
         >
           <PlusIcon className="w-3.5 h-3.5" />
           Ajouter
@@ -315,21 +273,16 @@ function TagListEditor({ label, placeholder, values, onChange }: TagListEditorPr
           {values.map((value) => (
             <span
               key={value}
-              className="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-md"
-              style={{
-                background: theme.BG,
-                border: `1px solid ${theme.BORDER}`,
-                color: theme.TEXT,
-              }}
+              className="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-md bg-background border border-border text-foreground"
             >
               {value}
               <button
                 type="button"
                 onClick={() => remove(value)}
-                className="hover:opacity-70"
+                className="hover:opacity-70 cursor-pointer"
                 aria-label={`Retirer ${value}`}
               >
-                <XIcon className="w-3 h-3" style={{ color: theme.TEXT_MUTED }} />
+                <XIcon className="w-3 h-3 text-muted-foreground" />
               </button>
             </span>
           ))}
@@ -376,7 +329,7 @@ function PreferredMapEditor({ preferred, onChange }: PreferredMapEditorProps) {
 
   return (
     <div>
-      <Label className="text-xs font-medium" style={{ color: theme.TEXT_MUTED }}>
+      <Label className="text-meta text-muted-foreground">
         Substitutions préférées (à éviter → préférer)
       </Label>
       <div className="flex gap-2 mt-1.5">
@@ -385,11 +338,6 @@ function PreferredMapEditor({ preferred, onChange }: PreferredMapEditorProps) {
           onChange={(e) => setKey(e.target.value)}
           placeholder="Mot à éviter"
           className="h-9 text-sm flex-1"
-          style={{
-            background: theme.BG,
-            border: `1px solid ${theme.BORDER}`,
-            color: theme.TEXT,
-          }}
         />
         <Input
           value={value}
@@ -402,21 +350,13 @@ function PreferredMapEditor({ preferred, onChange }: PreferredMapEditorProps) {
             }
           }}
           className="h-9 text-sm flex-1"
-          style={{
-            background: theme.BG,
-            border: `1px solid ${theme.BORDER}`,
-            color: theme.TEXT,
-          }}
         />
         <Button
           type="button"
           onClick={addPair}
+          variant="outline"
+          size="sm"
           className="h-9 text-xs font-medium gap-1.5 px-3"
-          style={{
-            background: theme.BG,
-            border: `1px solid ${theme.BORDER}`,
-            color: theme.TEXT,
-          }}
         >
           <PlusIcon className="w-3.5 h-3.5" />
           Ajouter
@@ -427,34 +367,24 @@ function PreferredMapEditor({ preferred, onChange }: PreferredMapEditorProps) {
           {entries.map(([k, values]) => (
             <div
               key={k}
-              className="flex items-start gap-2 p-2.5 rounded-md"
-              style={{ background: theme.BG, border: `1px solid ${theme.BORDER}` }}
+              className="flex items-start gap-2 p-2.5 rounded-md bg-background border border-border"
             >
-              <span className="text-xs font-medium w-32 shrink-0" style={{ color: theme.TEXT }}>
-                {k}
-              </span>
-              <span className="text-xs shrink-0" style={{ color: theme.TEXT_MUTED }}>
-                →
-              </span>
+              <span className="text-xs font-medium w-32 shrink-0 text-foreground">{k}</span>
+              <span className="text-xs shrink-0 text-muted-foreground">→</span>
               <div className="flex flex-wrap gap-1.5 flex-1">
                 {values.map((v) => (
                   <span
                     key={v}
-                    className="inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-md"
-                    style={{
-                      background: theme.SURFACE,
-                      border: `1px solid ${theme.BORDER}`,
-                      color: theme.TEXT,
-                    }}
+                    className="inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-md bg-muted border border-border text-foreground"
                   >
                     {v}
                     <button
                       type="button"
                       onClick={() => removePair(k, v)}
-                      className="hover:opacity-70"
+                      className="hover:opacity-70 cursor-pointer"
                       aria-label={`Retirer ${v}`}
                     >
-                      <XIcon className="w-3 h-3" style={{ color: theme.TEXT_MUTED }} />
+                      <XIcon className="w-3 h-3 text-muted-foreground" />
                     </button>
                   </span>
                 ))}

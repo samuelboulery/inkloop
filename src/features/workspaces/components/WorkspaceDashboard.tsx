@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
@@ -15,11 +14,6 @@ interface WorkspaceDashboardProps {
   templates: Template[]
   charter: EditorialCharter | null
 }
-
-const BORDER = 'hsl(222, 15%, 18%)'
-const TEXT = 'hsl(210, 20%, 94%)'
-const TEXT_MUTED = 'hsl(215, 12%, 50%)'
-const ACCENT = 'hsl(235, 80%, 62%)'
 
 export function WorkspaceDashboard({
   workspace,
@@ -38,28 +32,20 @@ export function WorkspaceDashboard({
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <header
-        className="px-7 py-5 flex items-center justify-between shrink-0"
-        style={{ borderBottom: `1px solid ${BORDER}` }}
-      >
+    <div className="flex flex-col h-full animate-fade-up">
+      <header className="px-7 py-5 flex items-center justify-between shrink-0 border-b border-border">
         <div>
-          <h1 className="text-[15px] font-semibold tracking-tight" style={{ color: TEXT }}>
+          <h1 className="text-[15px] font-semibold tracking-tight text-foreground">
             {workspace.name}
           </h1>
-          <p className="text-xs mt-0.5 font-normal" style={{ color: TEXT_MUTED }}>
+          <p className="text-meta mt-1 text-muted-foreground">
             {workspace.type === 'Personal' ? 'Profil personnel' : 'Association'}
           </p>
         </div>
         <Button
           onClick={handleNewCampaign}
-          className="gap-2 text-xs font-medium h-8 px-3.5 rounded-md transition-all hover:scale-[1.02]"
-          style={{
-            background: ACCENT,
-            color: '#fff',
-            border: 'none',
-            boxShadow: `0 1px 12px hsl(235, 80%, 62%, 0.35)`,
-          }}
+          size="sm"
+          className="gap-2 active:scale-[0.98]"
         >
           <PlusIcon className="w-3.5 h-3.5" />
           Nouvelle campagne
@@ -67,24 +53,16 @@ export function WorkspaceDashboard({
       </header>
 
       <Tabs defaultValue="campaigns" className="flex-1 flex flex-col">
-        <TabsList
-          className="rounded-none px-6 gap-0 h-auto pb-0"
-          style={{
-            background: 'transparent',
-            borderBottom: `1px solid ${BORDER}`,
-          }}
-        >
+        <TabsList className="rounded-none px-6 gap-0 h-auto pb-0 w-full justify-start bg-transparent border-b border-border">
           <TabsTrigger
             value="campaigns"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:bg-transparent px-4 py-3 text-xs font-medium transition-colors"
-            style={{ color: TEXT_MUTED }}
+            className="rounded-none border-b-2 border-transparent data-active:border-foreground data-active:bg-transparent px-4 py-3 text-xs font-medium text-muted-foreground transition-colors duration-150 hover:text-foreground/80 data-active:text-foreground"
           >
             Campagnes
           </TabsTrigger>
           <TabsTrigger
             value="settings"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:bg-transparent px-4 py-3 text-xs font-medium transition-colors"
-            style={{ color: TEXT_MUTED }}
+            className="rounded-none border-b-2 border-transparent data-active:border-foreground data-active:bg-transparent px-4 py-3 text-xs font-medium text-muted-foreground transition-colors duration-150 hover:text-foreground/80 data-active:text-foreground"
           >
             Paramètres
           </TabsTrigger>

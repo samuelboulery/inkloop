@@ -26,6 +26,7 @@ export interface WizardState {
   rawData: Record<string, unknown>
   objectives: string
   audience: string
+  targets: string[]
   kpis: string
   clarificationQA: ClarificationQA[]
   skeleton: EditorialSkeleton | undefined
@@ -45,6 +46,7 @@ const INITIAL_STATE: WizardState = {
   rawData: {},
   objectives: '',
   audience: '',
+  targets: [],
   kpis: '',
   clarificationQA: [],
   skeleton: undefined,
@@ -84,6 +86,7 @@ export function campaignToInitialWizardState(campaign: Campaign): Partial<Wizard
     rawData: rawDataRecord,
     objectives: (rawDataRecord.objectives as string) ?? '',
     audience: (rawDataRecord.audience as string) ?? '',
+    targets: Array.isArray(rawDataRecord.targets) ? (rawDataRecord.targets as string[]) : [],
     kpis: (rawDataRecord.kpis as string) ?? '',
     clarificationQA,
     skeleton,
@@ -146,14 +149,15 @@ export function useCampaignWizard(workspaceId: string, initialState?: Partial<Wi
   )
 
   const submitStep2 = useCallback(
-    async (input: { objectives: string; audience: string; kpis: string }) => {
-      if (!state.campaignId || !state.selectedTemplate) return
+    async (input: { objectives: string; audience: string; targets: string[]; kpis: string }) => {
+      if (!state.campaignId) return
       setLoading(true)
       try {
         const mergedRawData: Record<string, unknown> = {
           ...state.rawData,
           objectives: input.objectives,
           audience: input.audience,
+          targets: input.targets,
           kpis: input.kpis,
         }
 
@@ -166,7 +170,8 @@ export function useCampaignWizard(workspaceId: string, initialState?: Partial<Wi
           workspaceId,
           campaignName: state.campaignName,
           rawData: mergedRawData,
-          templateName: state.selectedTemplate.name,
+          templateName: state.selectedTemplate?.name ?? '',
+          templateSystemPrompt: state.selectedTemplate?.system_prompt,
         })
 
         setState((prev) => ({
@@ -175,6 +180,7 @@ export function useCampaignWizard(workspaceId: string, initialState?: Partial<Wi
           rawData: mergedRawData,
           objectives: input.objectives,
           audience: input.audience,
+          targets: input.targets,
           kpis: input.kpis,
           clarificationQA: qa,
           isLoading: false,
@@ -207,6 +213,7 @@ export function useCampaignWizard(workspaceId: string, initialState?: Partial<Wi
           campaignName: state.campaignName,
           rawData: state.rawData,
           clarifications: qa,
+          templateSystemPrompt: state.selectedTemplate?.system_prompt,
         })
 
         setState((prev) => ({
@@ -221,7 +228,15 @@ export function useCampaignWizard(workspaceId: string, initialState?: Partial<Wi
         setError(err instanceof Error ? err.message : 'Erreur lors de la sauvegarde')
       }
     },
-    [state.campaignId, state.campaignName, state.rawData, workspaceId, setLoading, setError],
+    [
+      state.campaignId,
+      state.campaignName,
+      state.rawData,
+      state.selectedTemplate,
+      workspaceId,
+      setLoading,
+      setError,
+    ],
   )
 
   const submitStep4 = useCallback(
@@ -235,6 +250,7 @@ export function useCampaignWizard(workspaceId: string, initialState?: Partial<Wi
           workspaceId,
           campaignName: state.campaignName,
           skeleton,
+          templateSystemPrompt: state.selectedTemplate?.system_prompt,
         })
 
         setState((prev) => ({
@@ -250,7 +266,14 @@ export function useCampaignWizard(workspaceId: string, initialState?: Partial<Wi
         setError(err instanceof Error ? err.message : 'Erreur lors de la génération')
       }
     },
-    [state.campaignId, state.campaignName, workspaceId, setLoading, setError],
+    [
+      state.campaignId,
+      state.campaignName,
+      state.selectedTemplate,
+      workspaceId,
+      setLoading,
+      setError,
+    ],
   )
 
   const submitStep5 = useCallback((finalEdits: Record<string, Partial<GeneratedPost>>) => {

@@ -63,16 +63,16 @@ export function StepTemplateSelect({ workspaceId, onSubmit, isLoading }: Props) 
   if (loadingTemplates) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-border border-t-foreground rounded-full animate-spin" />
       </div>
     )
   }
 
   if (templates.length === 0) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-400 text-sm">Aucun template disponible pour ce workspace.</p>
-        <p className="text-gray-600 text-xs mt-1">
+      <div className="text-center py-12 animate-fade-up">
+        <p className="text-sm text-muted-foreground">Aucun template disponible pour ce workspace.</p>
+        <p className="text-xs mt-1 text-muted-foreground/70">
           Créez d&apos;abord un template dans les paramètres.
         </p>
       </div>
@@ -80,53 +80,56 @@ export function StepTemplateSelect({ workspaceId, onSubmit, isLoading }: Props) 
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-up">
       <div>
-        <Label className="text-gray-300 text-sm mb-3 block">Choisir un template</Label>
+        <Label className="text-sm block mb-3 text-foreground">Choisir un template</Label>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {templates.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => {
-                setSelected(t)
-                setFieldValues({})
-              }}
-              className={`text-left p-3 rounded-lg border transition-colors ${
-                selected?.id === t.id
-                  ? 'border-indigo-500 bg-indigo-500/10'
-                  : 'border-gray-700 bg-gray-800 hover:border-gray-600'
-              }`}
-            >
-              <p className="text-sm font-medium text-white">{t.name}</p>
-              {t.description && (
-                <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">{t.description}</p>
-              )}
-            </button>
-          ))}
+          {templates.map((t) => {
+            const isSelected = selected?.id === t.id
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => {
+                  setSelected(t)
+                  setFieldValues({})
+                }}
+                className={`text-left p-3 rounded-lg transition-all duration-150 border ${
+                  isSelected
+                    ? 'border-foreground bg-secondary'
+                    : 'border-border bg-surface-1 hover:border-foreground/30'
+                }`}
+              >
+                <p className="text-sm font-medium text-foreground">{t.name}</p>
+                {t.description && (
+                  <p className="text-xs mt-0.5 line-clamp-2 text-muted-foreground">{t.description}</p>
+                )}
+              </button>
+            )
+          })}
         </div>
       </div>
 
       {selected && (
-        <div className="space-y-4">
+        <div className="space-y-4 animate-fade-up">
           <div>
-            <Label htmlFor="campaign-name" className="text-gray-300 text-sm">
-              Nom de la campagne <span className="text-red-400">*</span>
+            <Label htmlFor="campaign-name" className="text-sm text-foreground">
+              Nom de la campagne <span className="text-destructive">*</span>
             </Label>
             <Input
               id="campaign-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Ex : Lancement printemps 2026"
-              className="mt-1.5 bg-gray-800 border-gray-700 text-white placeholder:text-gray-500"
+              className="mt-1.5 bg-surface-1 border-border text-foreground transition-colors duration-200"
             />
           </div>
 
           {fields.map((field) => (
             <div key={field.name}>
-              <Label htmlFor={field.name} className="text-gray-300 text-sm">
+              <Label htmlFor={field.name} className="text-sm text-foreground">
                 {field.label}
-                {field.required && <span className="text-red-400 ml-1">*</span>}
+                {field.required && <span className="ml-1 text-destructive">*</span>}
               </Label>
               {field.type === 'textarea' ? (
                 <Textarea
@@ -134,7 +137,7 @@ export function StepTemplateSelect({ workspaceId, onSubmit, isLoading }: Props) 
                   value={fieldValues[field.name] ?? ''}
                   onChange={(e) => handleFieldChange(field.name, e.target.value)}
                   placeholder={field.placeholder}
-                  className="mt-1.5 bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 resize-none"
+                  className="mt-1.5 bg-surface-1 border-border text-foreground resize-none transition-colors duration-200"
                   rows={3}
                 />
               ) : (
@@ -144,7 +147,7 @@ export function StepTemplateSelect({ workspaceId, onSubmit, isLoading }: Props) 
                   value={fieldValues[field.name] ?? ''}
                   onChange={(e) => handleFieldChange(field.name, e.target.value)}
                   placeholder={field.placeholder}
-                  className="mt-1.5 bg-gray-800 border-gray-700 text-white placeholder:text-gray-500"
+                  className="mt-1.5 bg-surface-1 border-border text-foreground transition-colors duration-200"
                 />
               )}
             </div>
@@ -156,11 +159,11 @@ export function StepTemplateSelect({ workspaceId, onSubmit, isLoading }: Props) 
         <Button
           onClick={handleSubmit}
           disabled={!canSubmit || isLoading}
-          className="bg-indigo-600 hover:bg-indigo-500"
+          className="active:scale-[0.98]"
         >
           {isLoading ? (
             <span className="flex items-center gap-2">
-              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <span className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
               Création…
             </span>
           ) : (

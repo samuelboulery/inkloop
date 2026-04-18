@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { ArrowLeftIcon } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { CampaignWizard } from './CampaignWizard'
 import { CampaignResults } from './CampaignResults'
 import { campaignToInitialWizardState } from '../hooks/useCampaignWizard'
@@ -13,6 +13,7 @@ import type { WizardStep } from '../hooks/useCampaignWizard'
 interface CampaignDetailPageProps {
   campaign: Campaign
   workspaceId: string
+  campaignTargets?: string[]
 }
 
 function hasGeneratedContent(campaign: Campaign): boolean {
@@ -21,7 +22,11 @@ function hasGeneratedContent(campaign: Campaign): boolean {
   return Object.keys(content).length > 0
 }
 
-export function CampaignDetailPage({ campaign, workspaceId }: CampaignDetailPageProps) {
+export function CampaignDetailPage({
+  campaign,
+  workspaceId,
+  campaignTargets,
+}: CampaignDetailPageProps) {
   const router = useRouter()
 
   const [mode, setMode] = useState<'wizard' | 'results'>(
@@ -54,56 +59,41 @@ export function CampaignDetailPage({ campaign, workspaceId }: CampaignDetailPage
       : undefined
 
   return (
-    <div
-      className="flex flex-col h-full min-h-screen"
-      style={{ background: 'hsl(222, 18%, 8%)', color: 'hsl(210, 20%, 90%)' }}
-    >
+    <div className="flex flex-col h-full min-h-screen bg-background text-foreground animate-fade-in">
       {/* Top bar */}
-      <header
-        className="px-6 py-4 flex items-center gap-3 shrink-0"
-        style={{ borderBottom: '1px solid hsl(222, 15%, 16%)' }}
-      >
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => router.push(`/${workspaceId}`)}
-          className="gap-2 text-xs h-8 px-2"
-          style={{ color: 'hsl(215, 12%, 50%)' }}
+      <header className="relative z-10 px-6 py-4 flex items-center gap-3 shrink-0 border-b border-border">
+        <Link
+          href={`/${workspaceId}`}
+          className="inline-flex items-center gap-1.5 text-xs h-8 px-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors duration-200"
         >
           <ArrowLeftIcon className="w-3.5 h-3.5" />
           Retour
-        </Button>
+        </Link>
+        <span className="text-[11px] text-border">/</span>
+        <span className="text-sm font-medium truncate text-foreground">{campaign.name}</span>
         <span
-          className="text-[11px]"
-          style={{ color: 'hsl(222, 15%, 30%)' }}
-        >
-          /
-        </span>
-        <span className="text-sm font-medium truncate" style={{ color: 'hsl(210, 20%, 80%)' }}>
-          {campaign.name}
-        </span>
-        <span
-          className="text-[11px] ml-auto"
-          style={{ color: mode === 'wizard' ? 'hsl(235, 80%, 70%)' : 'hsl(215, 12%, 40%)' }}
+          className={
+            mode === 'wizard'
+              ? 'text-meta ml-auto px-2 py-0.5 rounded-md bg-secondary text-foreground'
+              : 'text-meta ml-auto px-2 py-0.5 rounded-md text-muted-foreground'
+          }
         >
           {mode === 'wizard' ? 'Wizard' : 'Résultats'}
         </span>
       </header>
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col max-w-3xl mx-auto w-full px-6 py-8 overflow-hidden">
+      <main className="flex-1 flex flex-col max-w-3xl mx-auto w-full px-6 py-8 overflow-hidden animate-fade-up">
         {mode === 'wizard' ? (
           <CampaignWizard
             workspaceId={workspaceId}
             resumeCampaign={resumeCampaign}
             wizardInitialState={wizardInitialState}
+            campaignTargets={campaignTargets}
             onComplete={handleWizardComplete}
           />
         ) : (
-          <CampaignResults
-            campaign={campaign}
-            onRestart={handleRestart}
-          />
+          <CampaignResults campaign={campaign} onRestart={handleRestart} />
         )}
       </main>
     </div>

@@ -19,6 +19,15 @@ export const metadata: Metadata = {
   description: "Plateforme de création de contenu multi-réseaux assistée par IA",
 };
 
+const themeInitScript = `(() => {
+  try {
+    const stored = localStorage.getItem('inkloop-theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const isDark = stored === 'dark' || (stored === null && prefersDark);
+    if (isDark) document.documentElement.classList.add('dark');
+  } catch (_) {}
+})();`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -27,8 +36,12 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
+      suppressHydrationWarning
       className={`${dmSans.variable} ${dmMono.variable} h-full antialiased`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

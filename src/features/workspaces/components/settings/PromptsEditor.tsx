@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { SettingsPanel } from './SettingsPanel'
-import { theme } from '@/lib/ui/theme'
 
 interface PromptsEditorProps {
   workspace: Workspace
@@ -90,11 +89,6 @@ export function PromptsEditor({ workspace }: PromptsEditorProps) {
           }
           rows={6}
           className="text-sm"
-          style={{
-            background: theme.BG,
-            border: `1px solid ${theme.BORDER}`,
-            color: theme.TEXT,
-          }}
         />
       </SettingsPanel>
 
@@ -103,14 +97,14 @@ export function PromptsEditor({ workspace }: PromptsEditorProps) {
         description="Instructions additionnelles par réseau social activé."
       >
         {platforms.length === 0 ? (
-          <p className="text-xs" style={{ color: theme.TEXT_MUTED }}>
+          <p className="text-xs text-muted-foreground">
             Activez d&apos;abord des réseaux sociaux dans l&apos;onglet « Réseaux » pour y associer un prompt.
           </p>
         ) : (
           <div className="space-y-4">
             {platforms.map((platform) => (
               <div key={platform}>
-                <Label className="text-xs font-medium" style={{ color: theme.TEXT }}>
+                <Label className="text-meta text-muted-foreground">
                   {platform}
                 </Label>
                 <Textarea
@@ -119,11 +113,6 @@ export function PromptsEditor({ workspace }: PromptsEditorProps) {
                   placeholder={`Conseils spécifiques pour ${platform} (ton, format, longueur, hashtags…)`}
                   rows={3}
                   className="mt-1.5 text-sm"
-                  style={{
-                    background: theme.BG,
-                    border: `1px solid ${theme.BORDER}`,
-                    color: theme.TEXT,
-                  }}
                 />
               </div>
             ))}
@@ -135,13 +124,13 @@ export function PromptsEditor({ workspace }: PromptsEditorProps) {
             type="button"
             onClick={handleSave}
             disabled={saving}
+            size="sm"
             className="h-8 text-xs font-medium px-4"
-            style={{ background: theme.ACCENT, color: '#fff', border: 'none' }}
           >
             {saving ? 'Sauvegarde…' : 'Sauvegarder'}
           </Button>
-          {error && <span className="text-xs" style={{ color: theme.DANGER }}>{error}</span>}
-          {success && <span className="text-xs" style={{ color: theme.SUCCESS }}>Enregistré.</span>}
+          {error && <span className="text-xs text-destructive">{error}</span>}
+          {success && <span className="text-xs text-foreground">Enregistré.</span>}
         </div>
       </SettingsPanel>
     </div>

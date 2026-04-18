@@ -47,10 +47,10 @@ export function StepGeneration({ generatedContent, onSubmit, onBack }: Props) {
 
   if (platforms.length === 0) {
     return (
-      <div className="space-y-6">
-        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3">
-          <p className="text-amber-400 text-sm font-medium">Contenu non généré</p>
-          <p className="text-amber-300/70 text-xs mt-1">
+      <div className="space-y-6 animate-fade-up">
+        <div className="rounded-lg px-4 py-3 bg-status-progress/10 border border-status-progress/25 animate-scale-in">
+          <p className="text-sm font-medium text-foreground">Contenu non généré</p>
+          <p className="text-xs mt-1 text-muted-foreground">
             Le service IA n&apos;est pas encore configuré (Phase 5). La campagne sera sauvegardée
             sans contenu généré.
           </p>
@@ -59,10 +59,7 @@ export function StepGeneration({ generatedContent, onSubmit, onBack }: Props) {
           <Button variant="outline" onClick={onBack}>
             Retour
           </Button>
-          <Button
-            onClick={() => onSubmit({})}
-            className="bg-indigo-600 hover:bg-indigo-500"
-          >
+          <Button onClick={() => onSubmit({})} className="active:scale-[0.98]">
             Continuer
           </Button>
         </div>
@@ -71,38 +68,41 @@ export function StepGeneration({ generatedContent, onSubmit, onBack }: Props) {
   }
 
   return (
-    <div className="space-y-6">
-      <p className="text-gray-400 text-sm">
+    <div className="space-y-6 animate-fade-up">
+      <p className="text-sm text-muted-foreground">
         Vérifiez et modifiez le contenu généré pour chaque réseau social.
       </p>
 
       <div className="space-y-5 max-h-96 overflow-y-auto pr-1">
         {platforms.map((platform) => (
-          <div key={platform} className="rounded-lg border border-gray-700 bg-gray-800/50 p-4">
+          <div
+            key={platform}
+            className="rounded-lg p-4 bg-surface-1 border border-border"
+          >
             <div className="flex items-center gap-2 mb-3">
-              <Badge variant="outline" className="text-indigo-400 border-indigo-500/50 text-xs">
+              <Badge variant="outline" className="text-meta">
                 {platform}
               </Badge>
             </div>
 
             <div className="space-y-3">
               <div>
-                <Label className="text-gray-400 text-xs">Caption</Label>
+                <Label className="text-xs text-muted-foreground/70">Caption</Label>
                 <Textarea
                   value={getCaption(platform)}
                   onChange={(e) => handleCaptionChange(platform, e.target.value)}
-                  className="mt-1 bg-gray-900 border-gray-700 text-white text-sm resize-none"
+                  className="mt-1 text-sm resize-none bg-background border-border text-foreground transition-colors duration-200"
                   rows={4}
                 />
               </div>
 
               <div>
-                <Label className="text-gray-400 text-xs">Hashtags</Label>
+                <Label className="text-xs text-muted-foreground/70">Hashtags</Label>
                 <Textarea
                   value={getHashtags(platform)}
                   onChange={(e) => handleHashtagsChange(platform, e.target.value)}
                   placeholder="#association #impact #solidarité"
-                  className="mt-1 bg-gray-900 border-gray-700 text-white text-sm resize-none font-mono"
+                  className="mt-1 text-sm resize-none font-mono bg-background border-border text-foreground transition-colors duration-200"
                   rows={2}
                 />
               </div>
@@ -115,10 +115,7 @@ export function StepGeneration({ generatedContent, onSubmit, onBack }: Props) {
         <Button variant="outline" onClick={onBack}>
           Retour
         </Button>
-        <Button
-          onClick={() => onSubmit(edits)}
-          className="bg-indigo-600 hover:bg-indigo-500"
-        >
+        <Button onClick={() => onSubmit(edits)} className="active:scale-[0.98]">
           Continuer
         </Button>
       </div>

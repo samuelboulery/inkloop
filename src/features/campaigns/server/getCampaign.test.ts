@@ -21,7 +21,7 @@ describe('getCampaign', () => {
     }
     vi.mocked(createServerClient).mockResolvedValue(supabase as never)
 
-    const result = await getCampaign('unknown-id')
+    const result = await getCampaign('unknown-id', 'workspace-123')
     expect(result).toBeNull()
   })
 
@@ -35,7 +35,7 @@ describe('getCampaign', () => {
     }
     vi.mocked(createServerClient).mockResolvedValue(supabase as never)
 
-    const result = await getCampaign('abc')
+    const result = await getCampaign('abc', 'workspace-123')
     expect(result).toEqual(mockCampaign)
   })
 })

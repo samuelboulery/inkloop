@@ -8,7 +8,7 @@ export default async function CampaignPage({
   params: Promise<{ workspaceId: string; campaignId: string }>
 }) {
   const { workspaceId, campaignId } = await params
-  const campaign = await getCampaign(campaignId)
+  const campaign = await getCampaign(campaignId, workspaceId)
   if (!campaign) notFound()
   return <CampaignDetailPage campaign={campaign} workspaceId={workspaceId} />
 }

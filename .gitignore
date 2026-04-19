@@ -40,3 +40,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .worktrees/
+
+# graphify
+graphify-out/obsidian/
+graphify-out/.graphify_*

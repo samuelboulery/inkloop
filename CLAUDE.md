@@ -154,24 +154,3 @@ Après chaque :
 
 Format : voir `docs/decisions/0001-wizard-pattern-campaigns.md` comme template.
 
-### Navigation Obsidian
-
-Vault : `graphify-out/obsidian/` — ouvrir comme vault dans Obsidian.
-Mettre à jour après un `/graphify . --update` :
-```bash
-$(cat graphify-out/.graphify_python) -c "
-import json
-from graphify.export import to_obsidian, to_canvas
-from networkx.readwrite import json_graph
-from pathlib import Path
-data = json.loads(Path('graphify-out/graph.json').read_text())
-G = json_graph.node_link_graph(data, edges='links')
-communities = {}
-for nid, d in G.nodes(data=True):
-    cid = d.get('community', 0)
-    communities.setdefault(cid, []).append(nid)
-to_obsidian(G, communities, 'graphify-out/obsidian')
-to_canvas(G, communities, 'graphify-out/obsidian/graph.canvas')
-print('Obsidian vault mis à jour')
-"
-```

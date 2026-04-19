@@ -120,3 +120,58 @@ Petite équipe (2-5 collaborateurs). Workflow attendu :
 3. Revue de code via l'agent `code-reviewer` avant PR.
 4. PR avec description en français + checklist de tests.
 5. Merge uniquement si CI verte.
+
+## graphify
+
+Ce projet dispose d'un graphe de connaissance persistant dans `graphify-out/`.
+
+### Quand consulter le graphe
+
+**Avant toute question d'architecture ou de codebase :**
+1. Lire `graphify-out/GRAPH_REPORT.md` (god nodes + communautés)
+2. Si `graphify-out/wiki/index.md` existe → naviguer le wiki plutôt que lire les fichiers bruts
+3. Pour une question précise : `/graphify query "<question>"`
+
+**Avant d'implémenter une feature ou corriger un bug :**
+- Consulter `docs/decisions/` pour les ADRs pertinents — les erreurs passées y sont documentées
+- Notamment : ADR-0002 (statuts), ADR-0003 (charte), ADR-0005 (server actions), ADR-0008 (bugs)
+
+### Quand mettre à jour le graphe
+
+| Événement | Action |
+|-----------|--------|
+| Modification de fichiers `.ts/.tsx` | Automatique (git hook post-commit) |
+| Ajout/modification de docs ou ADRs | `/graphify . --update` puis re-générer le wiki |
+| Nouvelle feature complète | `/graphify` (pipeline complet) |
+| Après un bug significatif | Ajouter une entrée dans `docs/decisions/0008-bug-fixes-and-lessons.md` |
+
+### Process ADR (obligatoire)
+
+Après chaque :
+- Bug significatif corrigé → ajouter entrée dans `docs/decisions/0008-bug-fixes-and-lessons.md`
+- Décision architecturale prise → créer `docs/decisions/XXXX-<sujet>.md`
+- Contrainte importante documentée → l'ajouter dans l'ADR concerné
+
+Format : voir `docs/decisions/0001-wizard-pattern-campaigns.md` comme template.
+
+### Navigation Obsidian
+
+Vault : `graphify-out/obsidian/` — ouvrir comme vault dans Obsidian.
+Mettre à jour après un `/graphify . --update` :
+```bash
+$(cat graphify-out/.graphify_python) -c "
+import json
+from graphify.export import to_obsidian, to_canvas
+from networkx.readwrite import json_graph
+from pathlib import Path
+data = json.loads(Path('graphify-out/graph.json').read_text())
+G = json_graph.node_link_graph(data, edges='links')
+communities = {}
+for nid, d in G.nodes(data=True):
+    cid = d.get('community', 0)
+    communities.setdefault(cid, []).append(nid)
+to_obsidian(G, communities, 'graphify-out/obsidian')
+to_canvas(G, communities, 'graphify-out/obsidian/graph.canvas')
+print('Obsidian vault mis à jour')
+"
+```
